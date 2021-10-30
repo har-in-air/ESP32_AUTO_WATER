@@ -14,7 +14,7 @@ If you reset the ESP32 module and then press a configuration button at an audio 
 
 <img src="docs/ap_config_homepage.png" />
 
-You can also update the firmware via this WiFi AP, as the watering system may not be conveniently located for serial port cable-based programming.
+You can also update the firmware via this WiFi AP, as the watering system may not be conveniently located for serial port cable-based programming. After the new firmware binary file is uploaded, the ESP32 will automatically re-start with the updated firmware.
 
 <img src="docs/ap_firmware_update.png" />
 
