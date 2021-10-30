@@ -1,0 +1,119 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<title>ESP32 Water Timer</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta charset="UTF-8">
+<link rel="stylesheet" type="text/css" href="style.css">
+</head>
+<body>
+<h1>ESP32 Water Timer</h1>
+<p><span>Firmware Revision : </span><span id="firmwareRevision">%FIRMWARE_REVISION%</span></p>
+<p><span>Sensor Reading : </span><span id="sensorReading">%SENSOR_READING%</span></p>
+<p><span>Battery Voltage : </span><span id="batteryVoltage">%BATTERY_VOLTAGE%v</span></p>
+<p><span>SuperCap Voltage : </span><span id="superCapVoltage">%SUPERCAP_VOLTAGE%v</span></p>
+<fieldset><legend>WiFi</legend>
+<form action="/get">
+<table>
+<tr><td>SSID</td><td><input type="text" name="wifiSSID" value="%WIFI_SSID%"></td></tr>
+<tr><td>Password</td><td><input type="password" name="wifiPassword" value="%WIFI_PASSWORD%"></td></tr>
+</table>
+<p>
+<input type="submit" value="Submit">
+</p>
+</form>
+
+</fieldset>  
+<fieldset><legend>Schedule</legend>
+<form action="/get">
+<table>
+<tr><td>Hour</td><td><input type="number" name="scheduleHour" min="9" max="15" value="%SCHEDULE_HOUR%"></td></tr>
+<tr><td>Minute</td><td><input type="number" name="scheduleMinute"  min="0" max="59" value="%SCHEDULE_MINUTE%"></td></tr>
+<tr><td>Sensor Threshold</td><td><input type="number" name="scheduleSensorThreshold" min="350" max="1000" value="%SCHEDULE_SENSOR_THRESHOLD%"></td></tr>
+<tr><td>On Time (secs)</td><td><input type="number" name="scheduleOnTimeSeconds"  min="5" max="25" value="%ON_TIME_SECONDS%"></td></tr>
+</table>
+<p>
+<input type="submit" value="Submit">
+</p>
+</form>
+
+</fieldset>
+<fieldset><legend>RTC Clock</legend>
+<form action="/get">
+<table>
+<tr><td>Year (0-99)</td><td><input type="number" name="rtcYear" min="21" max="99" value="%RTC_YEAR%"></td></tr>
+<tr><td>Month (1-12)</td><td><input type="number" name="rtcMonth" min="1" max="12"  value="%RTC_MONTH%"></td></tr>
+<tr><td>Day of Month (1-31)</td><td><input type="number" name="rtcDayOfMonth" min="1" max="31" value="%RTC_DOM%"></td></tr>
+<tr><td>Day of Week (1-7)</td><td><input type="number" name="rtcDayOfWeek" min="1" max="7" value="%RTC_DOW%"></td></tr>
+<tr><td>Hour (0-23)</td><td><input type="number" name="rtcHour" min="0" max="23" value="%RTC_HOUR%"></td></tr>
+<tr><td>Minute (0-59)</td><td><input type="number" name="rtcMinute" min="0" max="59" value="%RTC_MINUTE%"></td></tr>
+<tr><td>Second (0-59)</td><td><input type="number" name="rtcSecond" min="0" max="59" value="%RTC_SECOND%"></td></tr>
+</table>  
+<p>
+<input type="submit" value="Submit">
+</p>
+</fieldset>
+</form>
+<p>
+<div style="text-align:center;">
+<button style="text-align:center;" onclick="upload_handler()">Update Firmware</button>
+</div>
+</p>
+<p id="status"></p>
+<p id="upload_header"></p>
+<p id="upload"></p>
+<script>
+
+function upload_handler() {
+  document.getElementById("upload_header").innerHTML = "<h2>Upload File<h2>"
+  document.getElementById("status").innerHTML = "";
+  var uploadform =
+  "<form id=\"upload_form\" enctype=\"multipart/form-data\" method=\"post\">" +
+  "<input type=\"file\" name=\"file1\" id=\"file1\" onchange=\"uploadFile()\"><br>" +
+  "<progress id=\"progressBar\" value=\"0\" max=\"100\" style=\"width:300px;\"></progress>" +
+  "<h3 id=\"status\"></h3>" +
+  "<p id=\"loaded_n_total\"></p>" +
+  "</form>";
+  document.getElementById("upload").innerHTML = uploadform;
+  }
+
+function uploadFile() {
+  var file = document.getElementById("file1").files[0];
+  // alert(file.name+" | "+file.size+" | "+file.type);
+  var formdata = new FormData();
+  formdata.append("file1", file);
+  var ajax = new XMLHttpRequest();
+  ajax.upload.addEventListener("progress", upload_progress_handler, false);
+  ajax.addEventListener("load", upload_complete_handler, false);
+  ajax.addEventListener("error", upload_error_handler, false);
+  ajax.addEventListener("abort", upload_abort_handler, false);
+  ajax.open("POST", "/");
+  ajax.send(formdata);
+  }
+
+function upload_progress_handler(event) {
+  document.getElementById("loaded_n_total").innerHTML = "Uploaded " + event.loaded + " bytes";
+  var percent = (event.loaded / event.total) * 100;
+  document.getElementById("progressBar").value = Math.round(percent);
+  document.getElementById("status").innerHTML = Math.round(percent) + "% uploaded... please wait";
+  if (percent >= 100) {
+    document.getElementById("upload_header").innerHTML = "";
+    document.getElementById("upload").innerHTML = "";
+  	}
+  }
+
+function upload_complete_handler(event) {
+  document.getElementById("status").innerHTML = "Upload Complete";
+  document.getElementById("progressBar").value = 0;
+  }
+
+function upload_error_handler(event) {
+  document.getElementById("status").innerHTML = "Upload Failed";
+  }
+
+function upload_abort_handler(event) {
+  document.getElementById("status").innerHTML = "Aborted";
+  }
+</script>
+</body>
+</html>
