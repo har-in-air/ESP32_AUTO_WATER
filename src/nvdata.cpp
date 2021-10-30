@@ -6,8 +6,8 @@ Preferences Prefs;
 SCHEDULE Schedule;
 WIFI_CREDENTIALS WiFiCredentials;
 
-#define DEFAULT_SSID "Bga"
-#define DEFAULT_PASSWORD "6@R3a$&@Kc5^"
+#define DEFAULT_SSID "ssid"
+#define DEFAULT_PASSWORD "password"
 
 void  wifi_credentials_load(WIFI_CREDENTIALS &cred){
   Prefs.begin("wifi", true); // read-only

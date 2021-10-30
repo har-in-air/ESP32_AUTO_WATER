@@ -1,7 +1,6 @@
 #include <Arduino.h>
 #include <Wire.h>  
 #include <SPIFFS.h>
-#include <nvs_flash.h>
 #include "rtc.h"
 #include "nvdata.h"
 #include "sensor.h"
@@ -27,7 +26,7 @@ void setup() {
 
   Serial.begin(115200);
   Serial.println();
-  Serial.printf("EspTimer v%s compiled on %s at %s\n\n", FirmwareRevision, __DATE__, __TIME__);
+  Serial.printf("EspWaterTimer v%s compiled on %s at %s\n\n", FirmwareRevision, __DATE__, __TIME__);
 
   // load non-volatile data stored in preferences
   wifi_credentials_load(WiFiCredentials);
@@ -105,10 +104,13 @@ void setup() {
     rtc_set_daily_alarm(Schedule.hour, Schedule.minute);
     Serial.println("Updating google sheet - AutoWater");
     gs_update(GSData);
-    delay(100);
-    // for testing
-    Serial.println("Set next wakeup time for +1 minute");
-    esp_sleep_enable_timer_wakeup(60 * 1000000ULL);
+    delay(100);    
+    // for testing google sheets update, use esp32 wakeup timer for wakeup after 60seconds
+    //Serial.println("Set next wakeup time for +1 minute");
+    //esp_sleep_enable_timer_wakeup(60 * 1000000ULL);
+
+    // reduce power consumption to minimum before going to sleep. The DS3231 RTC will generate
+    // a reset pulse as scheduled for the next day at the scheduled time.
     wifi_off();
     esp_deep_sleep_start();
     }
@@ -116,6 +118,7 @@ void setup() {
 
 
 void loop() {
+  // nothing to do here, if in WiFi AP configuration mode, the Async Server  runs in its own task thread
   }
 
 
