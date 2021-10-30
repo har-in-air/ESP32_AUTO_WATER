@@ -8,10 +8,15 @@ The system is self-contained. No mains power supply or connection to a water fau
 
 In normal watering mode, the ESP32 is woken up from deep-sleep mode once a day by the DS3231 RTC at a scheduled time. It then checks the soil moisture level and if required, turns on the water pump. It then logs the calendar date and time, moisture sensor reading, power supply voltages and watering duration as entries in a Google Docs spreadsheet document. 
 
+<img src="docs/autowater_gs_update.png" />
+
 If you reset the ESP32 module and then press a configuration button at an audio prompt, the system is configured as a standalone WiFi Access Point (AP). A web server page running on this AP can then be used to configure the scheduled watering time, moisture threshold for watering, RTC clock time, internet access SSID and password credentials (for the Google Docs spreadsheet update). 
+
+<img src="docs/ap_config_homepage.png" />
 
 You can also update the firmware via this WiFi AP, as the watering system may not be conveniently located for serial port cable-based programming.
 
+<img src="docs/ap_firmware_update.png" />
 
 ## Power supply
 
@@ -39,7 +44,9 @@ For the ESP32 EN pin, I used a 2K2 resistor pullup to VCC and a 1uF ceramic cap 
 
 A CR2032 coin cell battery provides backup for the DS3231 RTC. 
 
-### Capacitive water sensor
+### Capacitive soil moisture sensor
+<img src="docs/capacitive_sensor.png" />
+
 [Ensure you have a working capacitive sensor module](https://www.youtube.com/watch?v=IGP38bz-K48). The version I have uses a 555 timer IC marked "NE555 20M". 
 
 I sealed the electronics back-end of the sensor board with silicone caulk and a heatshrink tube to prevent any corrosion of the electronics. A 1-meter shielded cable provides ground, 3.3V and sensor output interface to the ESP32.
@@ -47,4 +54,21 @@ I sealed the electronics back-end of the sensor board with silicone caulk and a 
 It's possible for the top soil layer to dry out while the roots are still in damp soil. So the sensor is placed halfway down the side of the plant pot, 
 
 ### CC CV battery charger module
+
+<img src="docs/cc_cv_module.png" />
+
 I used an LM2596 module to charge the 6V 1.3Ah lead acid battery. I set open circuit voltage (CV) to 7.2V, and short-circuit current (CC) to 0.25A.
+
+### Power Mosfet module
+
+<img src="docs/mosfet_control_module.png" />
+
+I used this mosfet transistor module to control the water pump. The PWM input is connected to an ESP32 GPIO pin for simple on-off control. 
+The supercapacitor power bank provides the power supply for the 12V water pump. I used an FR303 ultra-fast diode as a flyback protection for the inductive motor load.
+<img src="docs/LR7843-MOSFET-Control-Module-Schematic.jpg" />
+
+
+## Credits
+* [Updating Google Sheet via HTTPS](https://stackoverflow.com/questions/69685813/problem-esp32-send-data-to-google-sheet-through-google-app-script)
+* [ESP32 Async Web Server using SPIFFS]( https://randomnerdtutorials.com/esp32-web-server-spiffs-spi-flash-file-system/)
+* [ESP32 File Upload](https://github.com/smford/esp32-asyncwebserver-fileupload-example)
