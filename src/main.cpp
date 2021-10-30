@@ -94,7 +94,7 @@ void setup() {
       Serial.println("Watering done");
     	}
     else {
-      // soil is  wet
+      // soil is still damp
       GSData.onTimeSeconds = 0;
       Serial.printf("On Time %d secs\n", GSData.onTimeSeconds);
       Serial.println("Watering not required");
@@ -110,7 +110,7 @@ void setup() {
     //esp_sleep_enable_timer_wakeup(60 * 1000000ULL);
 
     // reduce power consumption to minimum before going to sleep. The DS3231 RTC will generate
-    // a reset pulse as scheduled for the next day at the scheduled time.
+    // a reset pulse the next day at the scheduled time to wake up the ESP32
     wifi_off();
     esp_deep_sleep_start();
     }
