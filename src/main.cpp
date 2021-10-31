@@ -8,6 +8,7 @@
 #include "tone.h"
 #include "google_sheets.h"
 
+#define LOG_TO_GOOGLE_SHEET true
 
 #define pinBuzzer       13  // piezo buzzer
 #define pinControl      26   // controls the pump
@@ -15,7 +16,7 @@
 #define pinSDA          27
 #define pinSCL          14
 
-const char* FirmwareRevision = "0.99";
+const char* FirmwareRevision = "1.00";
 
 void setup() {
   pinMode(pinControl, OUTPUT);
@@ -44,15 +45,6 @@ void setup() {
     Serial.println("RTC Alarm setting error, resetting");
     rtc_set_daily_alarm(Schedule.hour, Schedule.minute);
     }
-
-#if 0
-  while (1) {
-    Serial.printf("sensor reading %d\n", sensor_reading());
-    Serial.printf("battery voltage %.2fV\n", battery_voltage());
-    Serial.printf("supercap voltage %.2fV\n", supercap_voltage());
-    delay(1000);
-  }
-#endif
   
   Serial.println("\nFor WiFi AP mode, press and hold button (GPIO0) until you hear a long tone");
   beep(pinBuzzer,1000, 100, 100,10); // beep 10 times, so you have enough time to press the wifi config button
@@ -71,7 +63,6 @@ void setup() {
   else {
     Serial.println("\n====== Watering Mode ======");
     GS_DATA GSData;
-    gs_init();
     analogRead(pinADCSensor); // dummy sensor read, throwaway sample
     delay(50);
     // data to send to Google Docs sheet
@@ -102,8 +93,12 @@ void setup() {
     schedule_store(Schedule);
     Serial.println("Setting alarm for next day");
     rtc_set_daily_alarm(Schedule.hour, Schedule.minute);
+#if (LOG_TO_GOOGLE_SHEET == true)    
     Serial.println("Updating google sheet - AutoWater");
-    gs_update(GSData);
+    if (gs_init() == true) {
+      gs_update(GSData);
+      }
+#endif    
     delay(100);    
     // for testing google sheets update, use esp32 wakeup timer for wakeup after 60seconds
     //Serial.println("Set next wakeup time for +1 minute");

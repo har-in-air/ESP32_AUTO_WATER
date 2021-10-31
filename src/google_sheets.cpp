@@ -4,8 +4,8 @@
 #include "nvdata.h"
 #include "google_sheets.h"
 
-static const char* szGSHost = "script.google.com";
-static const int httpsPort = 443;
+static const char* SzGSHost = "script.google.com";
+static const int HttpsPort = 443;
 
 static String GS_ID = "your google sheets id goes here";
 static String GS_Sheet = "AutoWater";
@@ -14,26 +14,27 @@ WiFiClientSecure client;
 
 GS_DATA GSData;
 
-void gs_init() {
+bool gs_init() {
   esp_wifi_start();
   delay(100);
   WiFi.mode(WIFI_STA);
   WiFi.begin(WiFiCredentials.ssid.c_str(), WiFiCredentials.password.c_str());
   if (WiFi.waitForConnectResult() != WL_CONNECTED) {
     Serial.println("WiFi Failed!");
-    return;
+    return false;
     }
   Serial.print("IP Address: ");
   Serial.println(WiFi.localIP());
   client.setInsecure();
+  return true;
   }
 
 
-void gs_update(GS_DATA &data) {
-  Serial.printf("connecting to %s\n", szGSHost);
-  if (!client.connect(szGSHost, httpsPort)) {
+bool gs_update(GS_DATA &data) {
+  Serial.printf("connecting to %s\n", SzGSHost);
+  if (!client.connect(SzGSHost, HttpsPort)) {
     Serial.println("connection failed");
-    return;
+    return false;
     }
   // Post Data
   String url;
@@ -46,7 +47,7 @@ void gs_update(GS_DATA &data) {
   url += "&SuperCapVoltage=" + String(data.superCapVoltage, 1);
   Serial.print("requesting URL: "); Serial.println(url);
   client.print(String("GET ") + url + " HTTP/1.1\r\n" +
-    "Host: " + szGSHost + "\r\n" +
+    "Host: " + SzGSHost + "\r\n" +
     "User-Agent: ESP32\r\n" +
     "Connection: close\r\n\r\n");
   Serial.println("request sent");
@@ -55,21 +56,11 @@ void gs_update(GS_DATA &data) {
     String line = client.readStringUntil('\n');
     if (line == "\r") {
       Serial.println("headers received");
-      Serial.println(line);
       break;
       }
     }
   String line = client.readStringUntil('\n');
-  Serial.println(line);
-  
-  if (line.startsWith("{\"state\":\"success\"")) {
-    Serial.println("ESP-32/Arduino CI successfull!");
-    } 
-  else {
-    Serial.println("ESP-32/Arduino CI has failed");
-    }
   Serial.print("reply was : ");
   Serial.println(line);
-  Serial.println("closing connection");
-  Serial.println();
+  return true;
   }

@@ -10,7 +10,7 @@ typedef struct GS_DATA_ {
 } GS_DATA;
 
 
-void gs_init();
-void gs_update(GS_DATA &data);
+bool gs_init();
+bool gs_update(GS_DATA &data);
 
 #endif
