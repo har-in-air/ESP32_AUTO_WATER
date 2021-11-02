@@ -6,9 +6,7 @@
 #include "sensor.h"
 #include "wificonfig.h"
 #include "tone.h"
-#include "google_sheets.h"
-
-#define LOG_TO_GOOGLE_SHEET true
+#include "gs_update.h"
 
 #define pinBuzzer       13  // piezo buzzer
 #define pinControl      26   // controls the pump
@@ -30,20 +28,28 @@ void setup() {
   Serial.printf("EspWaterTimer v%s compiled on %s at %s\n\n", FirmwareRevision, __DATE__, __TIME__);
 
   // load non-volatile data stored in preferences
-  wifi_credentials_load(WiFiCredentials);
+  gs_config_load(GSConfig);
   schedule_load(Schedule);
+  Serial.printf("Loaded Schedule\n\ttime = %02d:%02d\n\tsensor threshold = %d\n\tton time = %d secs\n", 
+    Schedule.hour, Schedule.minute, Schedule.sensorThreshold, Schedule.onTimeSeconds);
   rtc_init();
   adc_init();
 
-  rtc_get_clock(Clock);
-  Serial.printf("\nRTC Clock : %s 20%02d-%02d-%02d %02d:%02d:%02d\n", szDayOfWeek[Clock.dayOfWeek-1],Clock.year, Clock.month, Clock.dayOfMonth, Clock.hour, Clock.minute, Clock.second);
+  if (rtc_get_clock(Clock) == true) {
+    Serial.printf("\nRTC Clock : %s 20%02d-%02d-%02d %02d:%02d:%02d\n", szDayOfWeek[Clock.dayOfWeek-1],Clock.year, Clock.month, Clock.dayOfMonth, Clock.hour, Clock.minute, Clock.second);
+    }
+  else {
+    Serial.println("Error reading RTC Clock");
+    }
   
-  uint8_t alarmHour, alarmMinute, alarmMode;
-  rtc_get_daily_alarm(alarmHour, alarmMinute, alarmMode);
-  Serial.printf("RTC Alarm2 : %s @ %02d:%02d\n",  alarmMode == 0x04 ? "Daily" : "Error", alarmHour, alarmMinute);
-  if ((alarmHour != Schedule.hour) || (alarmMinute != Schedule.minute) || (alarmMode != 0x04)) {
+  RTC_ALARM alarm;
+  bool result = rtc_get_daily_alarm(alarm);
+  Serial.printf("RTC Alarm2 : %s @ %02d:%02d\n",  result == true ? "Daily" : "Error", alarm.hour, alarm.minute);
+  if ((alarm.hour != Schedule.hour) || (alarm.minute != Schedule.minute) || (result != true)) {
     Serial.println("RTC Alarm setting error, resetting");
-    rtc_set_daily_alarm(Schedule.hour, Schedule.minute);
+    alarm.hour = Schedule.hour;
+    alarm.minute = Schedule.minute;
+    rtc_set_daily_alarm(alarm);
     }
   
   Serial.println("\nFor WiFi AP mode, press and hold button (GPIO0) until you hear a long tone");
@@ -65,7 +71,7 @@ void setup() {
     GS_DATA GSData;
     analogRead(pinADCSensor); // dummy sensor read, throwaway sample
     delay(50);
-    // data to send to Google Docs sheet
+    // sensor and threshol data 
     GSData.sensorReading = sensor_reading();
     GSData.batteryVoltage = battery_voltage();
     GSData.superCapVoltage = supercap_voltage();
@@ -90,15 +96,18 @@ void setup() {
       Serial.printf("On Time %d secs\n", GSData.onTimeSeconds);
       Serial.println("Watering not required");
     	}
-    schedule_store(Schedule);
     Serial.println("Setting alarm for next day");
-    rtc_set_daily_alarm(Schedule.hour, Schedule.minute);
-#if (LOG_TO_GOOGLE_SHEET == true)    
-    Serial.println("Updating google sheet - AutoWater");
-    if (gs_init() == true) {
-      gs_update(GSData);
-      }
-#endif    
+    alarm.hour = Schedule.hour;
+    alarm.minute = Schedule.minute;
+    rtc_set_daily_alarm(alarm);
+    // optional Google Sheet update 
+    if (GSConfig.update){
+      Serial.println("Updating google sheet - AutoWater");
+      if (gs_init() == true) {
+        gs_update(GSData);
+        }
+     }
+
     delay(100);    
     // for testing google sheets update, use esp32 wakeup timer for wakeup after 60seconds
     //Serial.println("Set next wakeup time for +1 minute");

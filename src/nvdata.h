@@ -1,15 +1,10 @@
 #ifndef NVDATA_H_
 #define NVDATA_H_
 
-#define DEFAULT_HOUR              11
-#define DEFAULT_MINUTE            0
-#define DEFAULT_SENSOR_THRESHOLD  600
 
-
-#define SENSOR_THRESHOLD_MIN  		600
+#define SENSOR_THRESHOLD_MIN  		500
 #define SENSOR_THRESHOLD_MAX  		1000
 
-#define DEFAULT_ON_TIME_SECONDS   20
 #define ON_TIME_MIN_SECONDS       5
 #define ON_TIME_MAX_SECONDS       30
 
@@ -21,19 +16,19 @@ typedef struct SCHEDULE_ {
   uint32_t onTimeSeconds; // watering time in seconds
   } SCHEDULE;
 
-
-typedef struct WIFI_CREDENTIALS_ {
-  String ssid;
-  String password;
-} WIFI_CREDENTIALS;
+typedef struct GS_CONFIG_ {
+  uint32_t update;
+  String wifiSSID;
+  String wifiPassword;
+} GS_CONFIG;
 
 extern SCHEDULE Schedule;
-extern WIFI_CREDENTIALS WiFiCredentials;
+extern GS_CONFIG GSConfig;
 
 void schedule_store(SCHEDULE &schedule);
 void schedule_load(SCHEDULE &schedule);
 
-void wifi_credentials_store(WIFI_CREDENTIALS &cred);
-void wifi_credentials_load(WIFI_CREDENTIALS &cred);
+void gs_config_store(GS_CONFIG &gsConfig);
+void gs_config_load(GS_CONFIG &gsConfig);
  
 #endif

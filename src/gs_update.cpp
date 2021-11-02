@@ -2,7 +2,7 @@
 #include <WiFiClientSecure.h>
 #include <esp_wifi.h>
 #include "nvdata.h"
-#include "google_sheets.h"
+#include "gs_update.h"
 
 static const char* SzGSHost = "script.google.com";
 static const int HttpsPort = 443;
@@ -18,7 +18,7 @@ bool gs_init() {
   esp_wifi_start();
   delay(100);
   WiFi.mode(WIFI_STA);
-  WiFi.begin(WiFiCredentials.ssid.c_str(), WiFiCredentials.password.c_str());
+  WiFi.begin(GSConfig.wifiSSID.c_str(), GSConfig.wifiPassword.c_str());
   if (WiFi.waitForConnectResult() != WL_CONNECTED) {
     Serial.println("WiFi Failed!");
     return false;

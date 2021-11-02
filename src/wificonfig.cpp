@@ -44,17 +44,22 @@ static void server_not_found(AsyncWebServerRequest *request) {
 
 // Replace %xx% placeholder 
 static String server_string_processor(const String& var){
+  
   if(var == "FIRMWARE_REVISION"){
     return FirmwareRevision;
     }
   else
-  // wifi 
+  // Google Sheet update 
+  if(var == "GS_UPDATE"){
+    return GSConfig.update ? "checked" : "";
+    }
+  else
   if(var == "WIFI_SSID"){
-    return WiFiCredentials.ssid;
+    return GSConfig.wifiSSID;
     }
   else
   if(var == "WIFI_PASSWORD"){
-    return WiFiCredentials.password;
+    return GSConfig.wifiPassword;
     }
   else
   // internal history
@@ -131,7 +136,7 @@ void wifi_access_point_init() {
   delay(100);
 #ifdef STATION  
   WiFi.mode(WIFI_STA);
-  WiFi.begin(WiFiCredentials.ssid.c_str(), WiFiCredentials.password.c_str());
+  WiFi.begin(GoogleSheet.ssid.c_str(), GoogleSheet.password.c_str());
   if (WiFi.waitForConnectResult() != WL_CONNECTED) {
     Serial.println("WiFi Failed!");
     return;
@@ -170,17 +175,30 @@ void wifi_access_point_init() {
     String inputMessage;
     bool bScheduleChange = false;
     bool bRTCChange = false;
-    bool bWiFiCredentialsChange = false;
-    // wifi credentials
+    bool bGSConfigChange = false;
+    int gsupdate = 0;
+    // Google Sheet update parameters
+    if (request->hasParam("gsUpdate")) {
+      inputMessage = request->getParam("gsUpdate")->value();
+      bGSConfigChange = true; 
+      Serial.printf("Form input message gsUpdate = %s", inputMessage.c_str());
+      gsupdate = 1;
+      }
     if (request->hasParam("wifiSSID")) {
       inputMessage = request->getParam("wifiSSID")->value();
-      bWiFiCredentialsChange = true; 
-      WiFiCredentials.ssid = inputMessage;
+      bGSConfigChange = true; 
+      GSConfig.wifiSSID = inputMessage;
+      }
+    if (request->hasParam("GSConfig")) {
+      inputMessage = request->getParam("GSConfig")->value();
+      bGSConfigChange = true; 
+      Serial.printf("GSConfig changed to %s\n", inputMessage);
+      GSConfig.update = inputMessage == "true" ? 1 : 0;
       }
     if (request->hasParam("wifiPassword")) {
       inputMessage = request->getParam("wifiPassword")->value();
-      bWiFiCredentialsChange = true; 
-      WiFiCredentials.password = inputMessage;
+      bGSConfigChange = true; 
+      GSConfig.wifiPassword = inputMessage;
       }
       
     // Desired Schedule 
@@ -258,19 +276,20 @@ void wifi_access_point_init() {
       Clock = ClockSet;
       bRTCChange = false;
       }
-    if (bWiFiCredentialsChange == true) {
-      Serial.println("Wifi credentials changed");
-      wifi_credentials_store(WiFiCredentials);
-      bWiFiCredentialsChange = false;
+    if (bGSConfigChange == true) {
+      Serial.println("Google Sheet update parameters changed");
+      GSConfig.update = gsupdate;
+      Serial.printf("update %d\n", GSConfig.update);
+      gs_config_store(GSConfig);
+      bGSConfigChange = false;
       }
     if (bScheduleChange == true) {
-      Serial.printf("Schedule changed\n");
+      Serial.printf("Schedule changed, saving schedule and resetting RTC daily alarm\n");
       schedule_store(Schedule);
-      // reset alarm for next day
-      rtc_set_daily_alarm(Schedule.hour, Schedule.minute);
-      uint8_t alarmHour, alarmMinute, alarmMode;
-      rtc_get_daily_alarm(alarmHour, alarmMinute, alarmMode);
-      Serial.printf("RTC Alarm2  %s @ %02d:%02d\n",  alarmMode == 0x04 ? "Daily" : "Error", alarmHour, alarmMinute);
+      RTC_ALARM alarm;
+      alarm.hour = Schedule.hour;
+      alarm.minute = Schedule.minute;
+      rtc_set_daily_alarm(alarm);
       bScheduleChange = false;
       }
     request->send(200, "text/html", "Input Received<br><a href=\"/\">Return to Home Page</a>");  

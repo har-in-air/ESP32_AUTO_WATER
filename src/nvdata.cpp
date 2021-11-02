@@ -4,29 +4,65 @@
 
 Preferences Prefs;
 SCHEDULE Schedule;
-WIFI_CREDENTIALS WiFiCredentials;
+GS_CONFIG GSConfig;
 
-#define DEFAULT_SSID "ssid"
-#define DEFAULT_PASSWORD "password"
+#define DEFAULT_SCHEDULE_HOUR     11
+#define DEFAULT_SCHEDULE_MINUTE   0
+#define DEFAULT_SENSOR_THRESHOLD  600
+#define DEFAULT_ON_TIME_SECONDS   20
 
-void  wifi_credentials_load(WIFI_CREDENTIALS &cred){
-  Prefs.begin("wifi", true); // read-only
-  cred.ssid = Prefs.getString("ssid", DEFAULT_SSID);
-  cred.password = Prefs.getString("password", DEFAULT_PASSWORD);
-  Prefs.end();
+#define DEFAULT_GS_UPDATE     0  
+#define DEFAULT_WIFI_SSID     "ssid"
+#define DEFAULT_WIFI_PASSWORD "password"
+
+void  gs_config_load(GS_CONFIG &gsConfig){
+  // open in read only mode
+  if (Prefs.begin("gs_config", true) == false) {
+    Prefs.end();
+    gsConfig.update = DEFAULT_GS_UPDATE;
+    gsConfig.wifiSSID = DEFAULT_WIFI_SSID;
+    gsConfig.wifiPassword = DEFAULT_WIFI_PASSWORD;
+    gs_config_store(gsConfig);
+    } 
+  else {
+    gsConfig.update = Prefs.getUInt("update", DEFAULT_GS_UPDATE);
+    gsConfig.wifiSSID = Prefs.getString("wifiSSID", DEFAULT_WIFI_SSID);
+    gsConfig.wifiPassword = Prefs.getString("wifiPassword", DEFAULT_WIFI_PASSWORD);
+    Prefs.end();
+    }
 }
 
-void  wifi_credentials_store(WIFI_CREDENTIALS &cred){
-  Prefs.begin("wifi", false); // read/write
+void gs_config_store(GS_CONFIG &gsConfig){
+  Prefs.begin("gs_config", false); // read/write
   Prefs.clear();
-  Prefs.putString("ssid", cred.ssid); 
-  Prefs.putString("password", cred.password); 
+  Prefs.putUInt("update", gsConfig.update); 
+  Prefs.putString("wifiSSID", gsConfig.wifiSSID); 
+  Prefs.putString("wifiPassword", gsConfig.wifiPassword); 
   Prefs.end();
-}
+  }
+
+
+void schedule_load(SCHEDULE &schedule) {
+  // open in read-only mode
+  if (Prefs.begin("schedule", true) == false) {
+    Prefs.end();
+    schedule.hour = DEFAULT_SCHEDULE_HOUR;
+    schedule.minute = DEFAULT_SCHEDULE_MINUTE;
+    schedule.sensorThreshold = DEFAULT_SENSOR_THRESHOLD;
+    schedule.onTimeSeconds = DEFAULT_ON_TIME_SECONDS;
+    schedule_store(schedule);
+    } 
+  else {
+    schedule.hour = Prefs.getUInt("hour", DEFAULT_SCHEDULE_HOUR);
+    schedule.minute = Prefs.getUInt("minute", DEFAULT_SCHEDULE_MINUTE);
+    schedule.sensorThreshold = Prefs.getUInt("sensorThreshold", DEFAULT_SENSOR_THRESHOLD);
+    schedule.onTimeSeconds = Prefs.getUInt("onTimeSeconds", DEFAULT_ON_TIME_SECONDS);
+    Prefs.end();
+    }
+  }  
+
 
 void schedule_store(SCHEDULE &schedule) {
-  Serial.printf("Storing Schedule\n\ttime = %02d:%02d\n\tsensor threshold = %d\n\twatering time = %d secs\n", 
-    schedule.hour, schedule.minute, schedule.sensorThreshold, schedule.onTimeSeconds);
   Prefs.begin("schedule", false); // read/write mode
   Prefs.clear();
   Prefs.putUInt("hour", schedule.hour);
@@ -37,14 +73,3 @@ void schedule_store(SCHEDULE &schedule) {
   }
 
 
-void schedule_load(SCHEDULE &schedule) {
-  Prefs.begin("schedule", true); // read-only
-  schedule.hour = Prefs.getUInt("hour", DEFAULT_HOUR);
-  schedule.minute = Prefs.getUInt("minute", DEFAULT_MINUTE);
-  schedule.sensorThreshold = Prefs.getUInt("sensorThreshold", DEFAULT_SENSOR_THRESHOLD);
-  schedule.onTimeSeconds = Prefs.getUInt("onTimeSeconds", DEFAULT_ON_TIME_SECONDS);
-  Prefs.end();
-  Serial.printf("Loaded Schedule\n\ttime = %02d:%02d\n\tsensor threshold = %d\n\tton time = %d secs\n", 
-    schedule.hour, schedule.minute,schedule.sensorThreshold, schedule.onTimeSeconds);
-  }
-  

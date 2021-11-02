@@ -37,7 +37,7 @@ void rtc_init() {
 	}
 
   
-void rtc_get_clock(RTC &clock){
+bool rtc_get_clock(RTC &clock){
 	uint8_t  b; 
 	Wire.beginTransmission(RTC_ADDRESS);
 	Wire.write(0x00);
@@ -60,11 +60,13 @@ void rtc_get_clock(RTC &clock){
     clock.month = (b&0x0F) + 10*((b>>4)&0x01);
     b = Wire.read();
     clock.year = (b&0x0F) + 10*((b>>4)&0x0F);
+    return true;
 		}
 else {
   Serial.println("unable to read RTC clock 7bytes");   
+  return false;
   }
-	}
+}
 
 void rtc_set_clock(RTC &clock){
 	uint8_t b;
@@ -90,15 +92,14 @@ void rtc_set_clock(RTC &clock){
   Wire.endTransmission();
 	}
 
-// set daily alarm
-void rtc_set_daily_alarm(uint8_t hour, uint8_t minute) {
+void rtc_set_daily_alarm(RTC_ALARM &alarm) {
 	uint8_t b;
   // set A2M2,A2M3 = 0, A2M4 = 1, DYDT_ = 0 (don't care)
   Wire.beginTransmission(RTC_ADDRESS);
   Wire.write(0x0B);
-	b = (minute%10) | ((minute/10)<<4);
+	b = (alarm.minute%10) | ((alarm.minute/10)<<4);
 	Wire.write(b); // 0x0B : minute
-	b = (hour%10) | ((hour/10)<<4);
+	b = (alarm.hour%10) | ((alarm.hour/10)<<4);
   Wire.write(b); // 0x0C : hour
   Wire.write(0x80); // 0x0D  : DYDT_ = 0, A2M4 = 1
 	Wire.write(0x06);  // 0x0E : INTCN = 1, A2IE = 1 
@@ -106,20 +107,21 @@ void rtc_set_daily_alarm(uint8_t hour, uint8_t minute) {
   Wire.endTransmission();
 	}
 
-void rtc_get_daily_alarm(uint8_t &hour, uint8_t &minute, uint8_t &mode) {
-    uint8_t b;
-    mode = 0;
+
+bool rtc_get_daily_alarm(RTC_ALARM &alarm) {
+  uint8_t b;
+  uint8_t mode = 0;
   Wire.beginTransmission(RTC_ADDRESS);
   Wire.write(0x0B);
   Wire.endTransmission();
   if(Wire.requestFrom(RTC_ADDRESS,(uint8_t) 3) == 3){
     b = Wire.read();
-    minute = (b&0x0F) + 10*((b>>4)&0x07);
+    alarm.minute = (b&0x0F) + 10*((b>>4)&0x07);
       if (b & 0x80) {
         mode |= 0x01; // A2M2
         }
     b = Wire.read();
-    hour = (b&0x0F) + 10*((b>>4)&0x03);
+    alarm.hour = (b&0x0F) + 10*((b>>4)&0x03);
       if (b & 0x80) {
         mode |= 0x02; // A2M3
         }
@@ -127,12 +129,14 @@ void rtc_get_daily_alarm(uint8_t &hour, uint8_t &minute, uint8_t &mode) {
       if (b & 0x80) {
         mode |= 0x04; // A2M4
         }
+    // check A2M2,A2M3 = 0, A2M4 = 1
+    return mode == 0x04 ? true : false; 
     }
 else {
   Serial.println("unable to read RTC alarm2 3 bytes");   
-  }
-    
-    }
+  return false;
+  }    
+}
 
 /*
 void rtc_set_alarm1_date_time(uint8_t month, uint8_t day, uint8_t hour, uint8_t minute, uint8_t second) {

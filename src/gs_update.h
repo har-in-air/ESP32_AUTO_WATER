@@ -1,6 +1,7 @@
-#ifndef GOOGLE_SHEETS_H_
-#define GOOGLE_SHEETS_H_
+#ifndef GS_UPDATE_H_
+#define GS_UPDATE_H_
 
+// google sheet  update data fields
 typedef struct GS_DATA_ {
   int sensorReading;
   int sensorThreshold;

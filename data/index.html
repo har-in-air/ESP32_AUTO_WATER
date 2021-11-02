@@ -12,8 +12,11 @@
 <p><span>Sensor Reading : </span><span id="sensorReading">%SENSOR_READING%</span></p>
 <p><span>Battery Voltage : </span><span id="batteryVoltage">%BATTERY_VOLTAGE%v</span></p>
 <p><span>SuperCap Voltage : </span><span id="superCapVoltage">%SUPERCAP_VOLTAGE%v</span></p>
-<fieldset><legend>WiFi</legend>
+<fieldset><legend>Google Sheet Update</legend>
 <form action="/get">
+ <div>
+<input type="checkbox" name="gsUpdate" id="gsUpdate" value="true" %GS_UPDATE%/><label for="gsUpdate"> Update</label>
+</div>  
 <table>
 <tr><td>SSID</td><td><input type="text" name="wifiSSID" value="%WIFI_SSID%"></td></tr>
 <tr><td>Password</td><td><input type="password" name="wifiPassword" value="%WIFI_PASSWORD%"></td></tr>
