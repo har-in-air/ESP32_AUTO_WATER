@@ -4,7 +4,7 @@ An ESP32 module together with a capacitive soil moisture sensor and DS3231 Real-
 
 Power for the pump comes from a bank of supercapacitors charged by a solar panel. The solar panel also charges a battery that supplies power to the electronics.
 
-The system is self-contained. No mains power supply or connection to a water faucet is required, so this can be used safely un-attended for long periods (several weeks), until the water storage runs out.
+The system is self-contained. No mains power supply or connection to a water faucet is required.
 
 In normal watering mode, the ESP32 is woken up from deep-sleep once a day at a scheduled time by the DS3231 RTC. It checks the soil moisture level and if required, turns on the water pump. 
 
@@ -12,7 +12,21 @@ It then optionally logs the calendar date and time, moisture sensor reading, pow
 
 <img src="docs/autowater_gs_update.png" />
 
-If you reset the ESP32 module and then press a configuration button at an audio prompt, the system is configured as a standalone WiFi Access Point (AP). A web server page running on this AP can then be used to configure the scheduled watering time, moisture threshold for watering, RTC clock time, internet access SSID and password credentials (for the optional Google Docs spreadsheet update). 
+If you want to configure the watering systems, press the reset button for the ESP32 module and then press the configuration button (GPIO0) when you hear a series of short beeps. Keep it pressed until you hear a long confirmation tone, and then release. The system is now configured as a standalone WiFi Access Point (AP) with SSID `ESP32Timer` and password `123456789`.
+
+A web server running on this AP at `url : http://192.168.4.1` can then be used to configure the following :
+* Schedule
+  * Daily wake-up time
+  * Soil moisture threshold for watering
+  * Pump on-time
+* Real-Time Clock
+  * Date
+  * Time
+* Google Sheet update
+  * Enable / Disable update
+  * AP SSID and password for internet access
+
+When done with changes, reset the ESP32 for normal watering mode with the new configuration.
 
 <img src="docs/ap_config_homepage.png" />
 
