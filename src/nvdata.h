@@ -1,6 +1,7 @@
 #ifndef NVDATA_H_
 #define NVDATA_H_
 
+#include "gs_update.h"
 
 #define SENSOR_THRESHOLD_MIN  		500
 #define SENSOR_THRESHOLD_MAX  		1000
@@ -9,26 +10,42 @@
 #define ON_TIME_MAX_SECONDS       30
 
 // schedule to save in preferences
-typedef struct SCHEDULE_ {
+typedef struct {
   uint32_t hour;
   uint32_t minute;
   uint32_t sensorThreshold;    // desired dry threshold, if reading > threshold, water
   uint32_t onTimeSeconds; // watering time in seconds
-  } SCHEDULE;
+  } SCHEDULE_t;
 
-typedef struct GS_CONFIG_ {
+typedef struct {
   uint32_t update;
   String wifiSSID;
   String wifiPassword;
-} GS_CONFIG;
+} GS_CONFIG_t;
 
-extern SCHEDULE Schedule;
-extern GS_CONFIG GSConfig;
 
-void schedule_store(SCHEDULE &schedule);
-void schedule_load(SCHEDULE &schedule);
+#define NUM_LOG_RECORDS 30
 
-void gs_config_store(GS_CONFIG &gsConfig);
-void gs_config_load(GS_CONFIG &gsConfig);
+typedef struct {
+  uint8_t oldestIndex;
+  uint8_t numEntries;
+  GS_DATA_t log[NUM_LOG_RECORDS];
+} LOG_BUFFER_t;
+
+extern SCHEDULE_t Schedule;
+extern GS_CONFIG_t GSConfig;
+extern LOG_BUFFER_t LogBuffer;
+
+void schedule_store(SCHEDULE_t &schedule);
+void schedule_load(SCHEDULE_t &schedule);
+
+void gs_config_store(GS_CONFIG_t &gsConfig);
+void gs_config_load(GS_CONFIG_t &gsConfig);
+
+void log_buffer_store(LOG_BUFFER_t &logBuffer);
+void log_buffer_load(LOG_BUFFER_t &logBuffer);
+void log_buffer_clear(LOG_BUFFER_t &logBuffer);
+bool log_buffer_enqueue(LOG_BUFFER_t &logBuffer, GS_DATA_t &gsData);
+bool log_buffer_dequeue(LOG_BUFFER_t &logBuffer, GS_DATA_t &gsData);
  
 #endif

@@ -9,18 +9,20 @@
 #include "gs_update.h"
 
 #define pinBuzzer       13  // piezo buzzer
-#define pinControl      26   // controls the pump
+#define pinPumpSwitch   26  // controls the pump
 #define pinConfigBtn    0   // wifi configuration
 #define pinSDA          27
 #define pinSCL          14
 
-const char* FirmwareRevision = "1.00";
+const char* FirmwareRevision = "1.10";
 
 void setup() {
-  pinMode(pinControl, OUTPUT);
-  digitalWrite(pinControl, LOW);
+  pinMode(pinPumpSwitch, OUTPUT);
+  digitalWrite(pinPumpSwitch, LOW);
   pinMode(pinConfigBtn, INPUT);
   pinMode(pinBuzzer, OUTPUT);
+  digitalWrite(pinBuzzer, LOW);
+  // I2C interface to DS3231 RTC
   Wire.begin(pinSDA,pinSCL); 
 
   Serial.begin(115200);
@@ -28,8 +30,16 @@ void setup() {
   Serial.printf("EspWaterTimer v%s compiled on %s at %s\n\n", FirmwareRevision, __DATE__, __TIME__);
 
   // load non-volatile data stored in preferences
-  gs_config_load(GSConfig);
-  schedule_load(Schedule);
+  // google sheet update yes/no, internet access point credentials
+  gs_config_load(GSConfig); 
+  // daily scheduled hour/minute, soil moisture threshold, pump on-time
+  schedule_load(Schedule); 
+  // buffer of unsent google sheet data records
+  log_buffer_load(LogBuffer); 
+  Serial.printf("Number unsent records = %d\n", LogBuffer.numEntries);
+
+  Serial.printf("GS Update required = %s\n", GSConfig.update ? "true" : "false");
+
   Serial.printf("Loaded Schedule\n\ttime = %02d:%02d\n\tsensor threshold = %d\n\tton time = %d secs\n", 
     Schedule.hour, Schedule.minute, Schedule.sensorThreshold, Schedule.onTimeSeconds);
   rtc_init();
@@ -53,12 +63,15 @@ void setup() {
     }
   
   Serial.println("\nFor WiFi AP mode, press and hold button (GPIO0) until you hear a long tone");
-  beep(pinBuzzer,1000, 100, 100,10); // beep 10 times, so you have enough time to press the wifi config button
+  // beep 10 times to allow enough time for pressing GPIO0 button if required
+  beep(pinBuzzer,1000, 100, 100,10); 
     
   if (digitalRead(pinConfigBtn) == 0) {
+    // GPIO0 button was pressed
     Serial.println("\n====== Access Point Configuration Mode ======");
     Serial.println("SSID=EspTimer Password=123456789  URL=http://192.168.4.1");
-    // 3 second long 800Hz tone to indicate unit is now in web server configuration mode.
+    // 3 second long 800Hz tone to indicate unit is now in standalone Access Point and 
+    // web server configuration mode.
     tone_generate(pinBuzzer, 800, 3000);
     if(!SPIFFS.begin(true)){
       Serial.println("An Error has occurred while mounting SPIFFS");
@@ -67,45 +80,65 @@ void setup() {
     wifi_access_point_init(); 
     }   
   else {
-    Serial.println("\n====== Watering Mode ======");
-    GS_DATA GSData;
+    Serial.println("\n====== Normal Watering Mode ======");
+    GS_DATA_t gsData;
     analogRead(pinADCSensor); // dummy sensor read, throwaway sample
     delay(50);
-    // sensor and threshol data 
-    GSData.sensorReading = sensor_reading();
-    GSData.batteryVoltage = battery_voltage();
-    GSData.superCapVoltage = supercap_voltage();
-    GSData.sensorThreshold = Schedule.sensorThreshold;
-    Serial.printf("Battery Voltage %.1fV\n", GSData.batteryVoltage);
-    Serial.printf("SuperCap Voltage %.1fV\n", GSData.superCapVoltage);
-    Serial.printf("Sensor Threshold %d\n", GSData.sensorThreshold);
-    Serial.printf("Sensor Reading %d\n", GSData.sensorReading); 
+    // date& time stamp. sensor and threshold data 
+    gsData.month = Clock.month;
+    gsData.day = Clock.dayOfMonth;
+    gsData.hour = Clock.hour;
+    gsData.minute = Clock.minute;
+    gsData.sensorReading = sensor_reading();
+    gsData.batteryVoltage = battery_voltage();
+    gsData.superCapVoltage = supercap_voltage();
+    gsData.sensorThreshold = Schedule.sensorThreshold;
+    Serial.printf("Battery Voltage %.1fV\n", gsData.batteryVoltage);
+    Serial.printf("SuperCap Voltage %.1fV\n", gsData.superCapVoltage);
+    Serial.printf("Sensor Threshold %d\n", gsData.sensorThreshold);
+    Serial.printf("Sensor Reading %d\n", gsData.sensorReading); 
     
-    if (GSData.sensorReading > (int)Schedule.sensorThreshold) {
-      // soil is dry
-      GSData.onTimeSeconds = Schedule.onTimeSeconds;
-      Serial.printf("On Time %d secs\n", GSData.onTimeSeconds);
-	    digitalWrite(pinControl, HIGH);
-    	beep(pinBuzzer,1000, 500, 500, Schedule.onTimeSeconds); // beep .5secs on, 0.5secs off for d seconds while control pin is high
-    	digitalWrite(pinControl, LOW);
+    if (gsData.sensorReading > (int)Schedule.sensorThreshold) {
+      // soil is dry, needs watering
+      gsData.onTimeSeconds = Schedule.onTimeSeconds;
+      Serial.printf("On Time %d secs\n", gsData.onTimeSeconds);
+	    digitalWrite(pinPumpSwitch, HIGH);
+      // beep 0.5secs on, 0.5secs off while pump is on 
+    	beep(pinBuzzer,1000, 500, 500, Schedule.onTimeSeconds); 
+    	digitalWrite(pinPumpSwitch, LOW);
       Serial.println("Watering done");
     	}
     else {
       // soil is still damp
-      GSData.onTimeSeconds = 0;
-      Serial.printf("On Time %d secs\n", GSData.onTimeSeconds);
+      gsData.onTimeSeconds = 0;
+      Serial.printf("On Time %d secs\n", gsData.onTimeSeconds);
       Serial.println("Watering not required");
     	}
     Serial.println("Setting alarm for next day");
     alarm.hour = Schedule.hour;
     alarm.minute = Schedule.minute;
-    rtc_set_daily_alarm(alarm);
-    // optional Google Sheet update 
+    //rtc_set_daily_alarm(alarm);
+    // update Google Sheet if required
     if (GSConfig.update){
       Serial.println("Updating google sheet - AutoWater");
       if (gs_init() == true) {
-        gs_update(GSData);
+        // connected to Internet access point
+        // if there are unsent data records, upload them first starting from the oldest
+        while (LogBuffer.numEntries > 0) {
+          GS_DATA_t logData;
+          log_buffer_dequeue(LogBuffer, logData);
+          gs_update(logData);
+          delay(500);
+          }
+        // upload today's data
+        gs_update(gsData);
         }
+      else {
+        // unable to connect to internet, append today's data to the buffer queue
+        // if buffer is full, oldest entry is over-written
+        log_buffer_enqueue(LogBuffer, gsData);
+        }
+     log_buffer_store(LogBuffer);
      }
 
     delay(100);    

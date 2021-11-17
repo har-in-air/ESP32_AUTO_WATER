@@ -1,17 +1,21 @@
 #ifndef GS_UPDATE_H_
 #define GS_UPDATE_H_
 
-// google sheet  update data fields
-typedef struct GS_DATA_ {
-  int sensorReading;
-  int sensorThreshold;
-  int onTimeSeconds;
+// google sheet row update record
+typedef struct {
+  uint8_t month;
+  uint8_t day;
+  uint8_t hour;
+  uint8_t minute;
+  uint16_t sensorReading;
+  uint16_t sensorThreshold;
+  uint8_t onTimeSeconds;
   float batteryVoltage;
   float superCapVoltage;
-} GS_DATA;
+} GS_DATA_t;
 
 
 bool gs_init();
-bool gs_update(GS_DATA &data);
+bool gs_update(GS_DATA_t &data);
 
 #endif
