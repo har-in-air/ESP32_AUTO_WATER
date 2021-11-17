@@ -8,13 +8,18 @@ The system is self-contained. No mains power supply or connection to a water fau
 
 In normal watering mode, the ESP32 is woken up from deep-sleep once a day at a scheduled time by the DS3231 RTC. It checks the soil moisture level and if required, turns on the water pump. 
 
-It then optionally logs the calendar date and time, moisture sensor reading, power supply voltages and watering duration as entries in a Google Docs spreadsheet document. 
+It then optionally logs the calendar date and time, moisture sensor reading, power supply voltages and watering duration as a row of entries in a Google Docs spreadsheet document. 
+
+If Google Sheet uploading is enabled and the configured Internet Access Point is not available at the scheduled time, the data record is appended to a buffer and saved to flash. If the IAP is available, the queued data records are first uploaded to the spreadsheet, and then the current data record is uploaded. Up to 30 records (30 days) can be buffered, after which the oldest record will be over-written by the current day's data record.
 
 <img src="docs/autowater_gs_update.png" />
 
-If you want to configure the watering systems, press the reset button for the ESP32 module and then press the configuration button (GPIO0) when you hear a series of short beeps. Keep it pressed until you hear a long confirmation tone, and then release. The system is now configured as a standalone WiFi Access Point (AP) with SSID `ESP32Timer` and password `123456789`.
+If you want to configure the watering systems, press the reset button for the ESP32 module and then press the configuration button (GPIO0) when you hear a series of short beeps. Keep it pressed until you hear a long confirmation tone, and then release. The system is now configured as a stand-alone WiFi Access Point (AP) with SSID `ESP32Timer` and password `123456789`.
 
 A web server running on this AP at `url : http://192.168.4.1` can then be used to configure the following :
+* Google Sheet update
+  * Enable / disable uploading of data to the spreadsheet
+  * AP SSID and password for internet access
 * Schedule
   * Daily wake-up time
   * Soil moisture threshold for watering
@@ -22,15 +27,12 @@ A web server running on this AP at `url : http://192.168.4.1` can then be used t
 * Real-Time Clock
   * Date
   * Time
-* Google Sheet update
-  * Enable / Disable update
-  * AP SSID and password for internet access
 
 When done with changes, reset the ESP32 for normal watering mode with the new configuration.
 
 <img src="docs/ap_config_homepage.png" />
 
-You can also update the firmware via this WiFi AP, as the watering system may not be conveniently located for serial port cable-based programming. After the new firmware binary file is uploaded, the ESP32 will automatically re-start with the updated firmware.
+You can also update the firmware via this AP, as the watering system may not be conveniently located for serial port cable-based programming. After the new firmware binary file is uploaded, the ESP32 will automatically re-start with the updated firmware.
 
 <img src="docs/ap_firmware_update.png" />
 
@@ -46,8 +48,8 @@ You can also update the firmware via this WiFi AP, as the watering system may no
 * Solar panel<br>
 A 20V solar panel is used to charge a 6V lead acid battery via a CC-CV module. It is also used to charge up a bank of supercapacitors, as it may not be sunny enough to run the 12V water pump directly off the solar panel.
 
-* Lead acid battery 6V 1.3Ah<br>
-This is used to provide power for the ESP32 module via a 3.3V regulator. You could instead use a 3.7V li-ion battery with a Li-ion MPPT solar charger module.<br>
+* Li-ion Battery 18650<br>
+This is used to provide power for the ESP32 module via a 3.3V regulator.<br>
 I used an HT7333 LDO 3.3V regulator because it draws very little quiescent current (< 5uA) and can handle higher input voltages. <br>
 When the ESP32 module is active the current draw is approximately 25mA on average. <br>
 When the ESP32 module is in deep sleep, the additional circuits drawing current are :
@@ -80,7 +82,7 @@ It is possible for the top soil layer to dry out while the roots are still in da
 
 <img src="docs/cc_cv_module.png" />
 
-I used an LM2596 module to charge the 6V 1.3Ah lead acid battery. I set open circuit voltage (CV) to 7.2V, and short-circuit current (CC) to 0.25A.
+I used an LM2596 module to charge the Li-ion battery. I set open circuit voltage (CV) to 4.2V, and short-circuit current (CC) to 0.25A.
 
 ## Power Mosfet module
 
