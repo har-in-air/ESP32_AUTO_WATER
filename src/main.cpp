@@ -117,7 +117,7 @@ void setup() {
     Serial.println("Setting alarm for next day");
     alarm.hour = Schedule.hour;
     alarm.minute = Schedule.minute;
-    //rtc_set_daily_alarm(alarm);
+    rtc_set_daily_alarm(alarm);
     // update Google Sheet if required
     if (GSConfig.update){
       Serial.println("Updating google sheet - AutoWater");
