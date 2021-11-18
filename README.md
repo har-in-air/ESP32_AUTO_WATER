@@ -46,13 +46,13 @@ You can also update the firmware via this AP, as the watering system may not be 
 ## Power supply
 
 * Solar panel<br>
-A 20V solar panel is used to charge a 6V lead acid battery via a CC-CV module. It is also used to charge up a bank of supercapacitors, as it may not be sunny enough to run the 12V water pump directly off the solar panel.
+A 20V solar panel is used to charge a Li-ion battery via a CC-CV module. It is also used to charge up a bank of supercapacitors, as it may not be sunny enough to run the 12V water pump directly off the solar panel.
 
 * Li-ion Battery 18650<br>
 This is used to provide power for the ESP32 module via a 3.3V regulator.<br>
 I used an HT7333 LDO 3.3V regulator because it draws very little quiescent current (< 5uA) and can handle higher input voltages. <br>
-When the ESP32 module is active the current draw is approximately 25mA on average. <br>
-When the ESP32 module is in deep sleep, the additional circuits drawing current are :
+When the ESP32 module is active the module current draw is ~25mA with an additional 6mA for the soil moisture sensor.<br>
+The power to the soil moisture sensor is switched off before the ESP32 enters deep-sleep  mode. So in deep-sleep mode, the additional circuits drawing current are :
     * HT7333 regulator quiescent current (< 5uA)
     * DS3231 RTC (< 100uA)
     * The resistors providing the sensed voltages to the ESP32 ADC. I used 500K potentiometers to minimize the current draw, with a 100nF capacitor on the ADC pins to minimize noise due to the high source impedance.
@@ -77,6 +77,8 @@ A CR2032 3V coin cell battery provides VBAT backup for the DS3231 RTC.
 I sealed the electronics back-end of the sensor board with silicone caulk and a heatshrink tube to prevent any corrosion of the electronics. A 1-meter shielded cable provides ground, 3.3V and sensor output interface to the ESP32.
 
 It is possible for the top soil layer to dry out while the roots are still in damp soil. So the sensor is placed horizontally, halfway down the side of the plant pot. 
+
+This particular sensor has a current draw of ~6mA.  It is powered via a nmos-pmos fet (2N7002/PMV65XP) power switch circuit  controlled via ESP32 GPIO pin 25. After reading the sensor, the power is switched off. This is critical for minimizing total circuit current draw during the ESP32 deep-sleep cycle.
 
 ## CC CV battery charger module
 
