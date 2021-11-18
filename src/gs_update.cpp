@@ -5,6 +5,7 @@
 #include "gs_update.h"
 
 static String GS_ID = "--your google spreadsheet id goes here--";
+
 static String GS_Sheet = "AutoWater";
 
 static String SzMonth[12]= {"Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"};
@@ -133,7 +134,7 @@ bool gs_update(GS_DATA_t &data) {
   int httpCode = http.GET();
   http.end();
   if (httpCode > 0) { 
-    Serial.println(httpCode);
+    Serial.print("Http Code expect 302, received ");Serial.println(httpCode);
     // redirect code 302 is the expected result
     return httpCode == 302 ? true : false;
     } 

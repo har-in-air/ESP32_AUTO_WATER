@@ -11,12 +11,16 @@
 #define pinBuzzer       13  // piezo buzzer
 #define pinPumpSwitch   26  // controls the pump
 #define pinConfigBtn    0   // wifi configuration
+#define pinSensorPower  25
 #define pinSDA          27
 #define pinSCL          14
 
-const char* FirmwareRevision = "1.10";
+const char* FirmwareRevision = "1.12";
 
 void setup() {
+  pinMode(pinSensorPower, OUTPUT);
+  // sensor power on
+  digitalWrite(pinSensorPower, HIGH);
   pinMode(pinPumpSwitch, OUTPUT);
   digitalWrite(pinPumpSwitch, LOW);
   pinMode(pinConfigBtn, INPUT);
@@ -84,12 +88,14 @@ void setup() {
     GS_DATA_t gsData;
     analogRead(pinADCSensor); // dummy sensor read, throwaway sample
     delay(50);
-    // date& time stamp. sensor and threshold data 
+    // date & time stamp, sensor and threshold data 
+    gsData.sensorReading = sensor_reading();
+    // power off sensor, reduce 6mA current draw
+    digitalWrite(pinSensorPower, LOW);
     gsData.month = Clock.month;
     gsData.day = Clock.dayOfMonth;
     gsData.hour = Clock.hour;
     gsData.minute = Clock.minute;
-    gsData.sensorReading = sensor_reading();
     gsData.batteryVoltage = battery_voltage();
     gsData.superCapVoltage = supercap_voltage();
     gsData.sensorThreshold = Schedule.sensorThreshold;
