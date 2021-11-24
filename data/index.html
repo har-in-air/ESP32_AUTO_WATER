@@ -4,6 +4,7 @@
 <title>ESP32 Water Timer</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta charset="UTF-8">
+<meta http-equiv="refresh" content="10">
 <link rel="stylesheet" type="text/css" href="style.css">
 </head>
 <body>
@@ -12,14 +13,18 @@
 <p><span>Sensor Reading : </span><span id="sensorReading">%SENSOR_READING%</span></p>
 <p><span>Battery Voltage : </span><span id="batteryVoltage">%BATTERY_VOLTAGE%v</span></p>
 <p><span>SuperCap Voltage : </span><span id="superCapVoltage">%SUPERCAP_VOLTAGE%v</span></p>
-<fieldset><legend>Google Sheet Update</legend>
-<form action="/get">
- <div>
-<input type="checkbox" name="gsUpdate" id="gsUpdate" value="true" %GS_UPDATE%/><label for="gsUpdate"> Update</label>
+<p><span>Date/Time : </span><span id="dateTime">%RTC_YEAR%-%RTC_MONTH%-%RTC_DOM% %RTC_DOW% %RTC_HOUR%:%RTC_MINUTE%:%RTC_SECOND%</span></p>
+<div>
+<input type="checkbox" name="gsUpdate" id="gsUpdate" value="true" %GS_UPDATE%/><label for="gsUpdate">Google Sheet Update</label>
 </div>  
+<p>
+<fieldset><legend>Internet Credentials</legend>
+<form action="/get">
 <table>
 <tr><td>SSID</td><td><input type="text" name="wifiSSID" value="%WIFI_SSID%"></td></tr>
 <tr><td>Password</td><td><input type="password" name="wifiPassword" value="%WIFI_PASSWORD%"></td></tr>
+<tr><td>UTC Offset (seconds)</td><td><input type="number" name="utcOffset" value="%UTC_OFFSET%"></td></tr>
+<tr><td>Daylight Offset (seconds)</td><td><input type="number" name="daylightOffset" value="%DAYLIGHT_OFFSET%"></td></tr>
 </table>
 <p>
 <input type="submit" value="Submit">
@@ -41,16 +46,16 @@
 </form>
 
 </fieldset>
-<fieldset><legend>RTC Clock</legend>
+<fieldset><legend>RTC Date/Time</legend>
 <form action="/get">
 <table>
-<tr><td>Year (0-99)</td><td><input type="number" name="rtcYear" min="21" max="99" value="%RTC_YEAR%"></td></tr>
-<tr><td>Month (1-12)</td><td><input type="number" name="rtcMonth" min="1" max="12"  value="%RTC_MONTH%"></td></tr>
-<tr><td>Day of Month (1-31)</td><td><input type="number" name="rtcDayOfMonth" min="1" max="31" value="%RTC_DOM%"></td></tr>
-<tr><td>Day of Week (1-7)</td><td><input type="number" name="rtcDayOfWeek" min="1" max="7" value="%RTC_DOW%"></td></tr>
-<tr><td>Hour (0-23)</td><td><input type="number" name="rtcHour" min="0" max="23" value="%RTC_HOUR%"></td></tr>
-<tr><td>Minute (0-59)</td><td><input type="number" name="rtcMinute" min="0" max="59" value="%RTC_MINUTE%"></td></tr>
-<tr><td>Second (0-59)</td><td><input type="number" name="rtcSecond" min="0" max="59" value="%RTC_SECOND%"></td></tr>
+<tr><td>Year [21..99]</td><td><input type="number" name="rtcYear" min="21" max="99"></td></tr>
+<tr><td>Month [1..12]</td><td><input type="number" name="rtcMonth" min="1" max="12"></td></tr>
+<tr><td>Day of Month [1..31]</td><td><input type="number" name="rtcDayOfMonth" min="1" max="31"></td></tr>
+<tr><td>Day of Week [0=Sun..6=Sat]</td><td><input type="number" name="rtcDayOfWeek" min="0" max="6"></td></tr>
+<tr><td>Hour [0..23]</td><td><input type="number" name="rtcHour" min="0" max="23"></td></tr>
+<tr><td>Minute [0..59]</td><td><input type="number" name="rtcMinute" min="0" max="59"></td></tr>
+<tr><td>Second [0..59]</td><td><input type="number" name="rtcSecond" min="0" max="59"></td></tr>
 </table>  
 <p>
 <input type="submit" value="Submit">
