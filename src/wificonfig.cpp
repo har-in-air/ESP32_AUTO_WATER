@@ -62,6 +62,14 @@ static String server_string_processor(const String& var){
     return GSConfig.wifiPassword;
     }
   else
+  if(var == "UTC_OFFSET"){
+    return String(GSConfig.utcOffsetSeconds);
+    }
+  else
+  if(var == "DAYLIGHT_OFFSET"){
+    return String(GSConfig.daylightOffsetSeconds);
+    }
+  else
   // internal history
   if(var == "BATTERY_VOLTAGE"){
     return String(BatteryVoltage, 1);
@@ -94,31 +102,31 @@ static String server_string_processor(const String& var){
   else
   // RTC current clock 
   if(var == "RTC_YEAR"){
-    return String((int)Clock.year);
+    return String(1900+Clock.tm_year);
     }
   else
   if(var == "RTC_MONTH"){
-    return String((int)Clock.month);
+    return  Clock.tm_mon < 9 ? "0"+String(1+Clock.tm_mon) : String(1+Clock.tm_mon);
     }
   else
   if(var == "RTC_DOM"){
-    return String((int)Clock.dayOfMonth);
+    return Clock.tm_mday < 10 ? "0"+String(Clock.tm_mday) : String(Clock.tm_mday);
     }
   else
   if(var == "RTC_DOW"){
-    return String((int)Clock.dayOfWeek);
+    return String(SzDayOfWeek[Clock.tm_wday]);
     }
   else
   if(var == "RTC_HOUR"){
-    return String((int)Clock.hour);
+    return Clock.tm_hour < 10 ? "0"+String(Clock.tm_hour) : String(Clock.tm_hour);
     }
   else
   if(var == "RTC_MINUTE"){
-    return String((int)Clock.minute);
+    return Clock.tm_min < 10 ? "0"+String(Clock.tm_min) : String(Clock.tm_min);
     }
   else
   if(var == "RTC_SECOND"){
-    return String((int)Clock.second);
+    return Clock.tm_sec < 10 ? "0"+String(Clock.tm_sec) : String(Clock.tm_sec);
     }
   else return "?";
   }
@@ -177,28 +185,33 @@ void wifi_access_point_init() {
     bool bRTCChange = false;
     bool bGSConfigChange = false;
     int gsupdate = 0;
-    // Google Sheet update parameters
+    // Google Sheet update option
     if (request->hasParam("gsUpdate")) {
+      // gsUpdate is added to GET request only if box is checked
       inputMessage = request->getParam("gsUpdate")->value();
       bGSConfigChange = true; 
-      Serial.printf("Form input message gsUpdate = %s", inputMessage.c_str());
       gsupdate = 1;
       }
+    // Internet Access Credentials  
     if (request->hasParam("wifiSSID")) {
       inputMessage = request->getParam("wifiSSID")->value();
       bGSConfigChange = true; 
       GSConfig.wifiSSID = inputMessage;
       }
-    if (request->hasParam("GSConfig")) {
-      inputMessage = request->getParam("GSConfig")->value();
-      bGSConfigChange = true; 
-      Serial.printf("GSConfig changed to %s\n", inputMessage);
-      GSConfig.update = inputMessage == "true" ? 1 : 0;
-      }
     if (request->hasParam("wifiPassword")) {
       inputMessage = request->getParam("wifiPassword")->value();
       bGSConfigChange = true; 
       GSConfig.wifiPassword = inputMessage;
+      }
+    if (request->hasParam("utcOffset")) {
+      inputMessage = request->getParam("utcOffset")->value();
+      bGSConfigChange = true; 
+      GSConfig.utcOffsetSeconds = inputMessage.toInt();
+      }
+    if (request->hasParam("daylightOffset")) {
+      inputMessage = request->getParam("daylightOffset")->value();
+      bGSConfigChange = true; 
+      GSConfig.daylightOffsetSeconds = inputMessage.toInt();
       }
       
     // Desired Schedule 
@@ -227,51 +240,44 @@ void wifi_access_point_init() {
     ClockSet = Clock;  
     if (request->hasParam("rtcYear")) {
       inputMessage = request->getParam("rtcYear")->value();
-      //Serial.printf("rtcYear %s\n", inputMessage.c_str());    
       bRTCChange = true; 
-      ClockSet.year = (uint8_t)inputMessage.toInt();
+      ClockSet.tm_year = 100 + inputMessage.toInt();
       }
     if (request->hasParam("rtcMonth")) {
       inputMessage = request->getParam("rtcMonth")->value();
-    //Serial.printf("rtcMonth %s\n", inputMessage.c_str());
       bRTCChange = true; 
-      ClockSet.month = (uint8_t)inputMessage.toInt();
+      ClockSet.tm_mon = inputMessage.toInt() - 1; // tm uses 0-11, not 1-12
       }
     if (request->hasParam("rtcDayOfMonth")) {
       inputMessage = request->getParam("rtcDayOfMonth")->value();
-      //Serial.printf("rtcDayOfMonth %s\n", inputMessage.c_str());
       bRTCChange = true; 
-      ClockSet.dayOfMonth = (uint8_t)inputMessage.toInt();
+      ClockSet.tm_mday = inputMessage.toInt();
       }
     if (request->hasParam("rtcDayOfWeek")) {
       inputMessage = request->getParam("rtcDayOfWeek")->value();
-      //Serial.printf("rtcDayOfWeek %s\n", inputMessage.c_str());
       bRTCChange = true; 
-      ClockSet.dayOfWeek = (uint8_t)inputMessage.toInt();
+      ClockSet.tm_wday = inputMessage.toInt();
       }
     if (request->hasParam("rtcHour")) {
       inputMessage = request->getParam("rtcHour")->value();
-      //Serial.printf("rtcHour %s\n", inputMessage.c_str());
       bRTCChange = true; 
-      ClockSet.hour = (uint8_t)inputMessage.toInt();
+      ClockSet.tm_hour = inputMessage.toInt();
       }
     if (request->hasParam("rtcMinute")) {
       inputMessage = request->getParam("rtcMinute")->value();
-      //Serial.printf("rtcMinute %s\n", inputMessage.c_str());
       bRTCChange = true; 
-      ClockSet.minute = (uint8_t)inputMessage.toInt();
+      ClockSet.tm_min = inputMessage.toInt();
       }
     if (request->hasParam("rtcSecond")) {
       inputMessage = request->getParam("rtcSecond")->value();
-      //Serial.printf("rtcSecond %s\n", inputMessage.c_str());
       bRTCChange = true; 
-      ClockSet.second = (uint8_t)inputMessage.toInt();
+      ClockSet.tm_sec = inputMessage.toInt();
       }
 
     if (bRTCChange == true) {
       Serial.println("RTC Clock changed");
-      Serial.printf("Set RTC Clock to : %s 20%02d-%02d-%02d %02d:%02d:%02d\n", 
-        szDayOfWeek[ClockSet.dayOfWeek-1],ClockSet.year, ClockSet.month, ClockSet.dayOfMonth, ClockSet.hour, ClockSet.minute, ClockSet.second);
+      Serial.printf("Set RTC Clock to : %04d-%02d-%02d %s %02d:%02d:%02d\n", 
+        1900+ClockSet.tm_year, 1+ClockSet.tm_mon, ClockSet.tm_mday, SzDayOfWeek[ClockSet.tm_wday], ClockSet.tm_hour, ClockSet.tm_min, ClockSet.tm_sec);
       rtc_set_clock(ClockSet);
       Clock = ClockSet;
       bRTCChange = false;

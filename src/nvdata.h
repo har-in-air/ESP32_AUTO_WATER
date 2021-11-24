@@ -21,6 +21,8 @@ typedef struct {
   uint32_t update;
   String wifiSSID;
   String wifiPassword;
+  int32_t utcOffsetSeconds;
+  int32_t daylightOffsetSeconds;
 } GS_CONFIG_t;
 
 

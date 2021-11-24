@@ -7,6 +7,7 @@
 #include "wificonfig.h"
 #include "tone.h"
 #include "gs_update.h"
+#include "ntp.h"
 
 #define pinBuzzer       13  // piezo buzzer
 #define pinPumpSwitch   26  // controls the pump
@@ -15,7 +16,7 @@
 #define pinSDA          27
 #define pinSCL          14
 
-const char* FirmwareRevision = "1.12";
+const char* FirmwareRevision = "1.20";
 
 void setup() {
   pinMode(pinSensorPower, OUTPUT);
@@ -48,13 +49,6 @@ void setup() {
     Schedule.hour, Schedule.minute, Schedule.sensorThreshold, Schedule.onTimeSeconds);
   rtc_init();
   adc_init();
-
-  if (rtc_get_clock(Clock) == true) {
-    Serial.printf("\nRTC Clock : %s 20%02d-%02d-%02d %02d:%02d:%02d\n", szDayOfWeek[Clock.dayOfWeek-1],Clock.year, Clock.month, Clock.dayOfMonth, Clock.hour, Clock.minute, Clock.second);
-    }
-  else {
-    Serial.println("Error reading RTC Clock");
-    }
   
   RTC_ALARM alarm;
   bool result = rtc_get_daily_alarm(alarm);
@@ -92,10 +86,11 @@ void setup() {
     gsData.sensorReading = sensor_reading();
     // power off sensor, reduce 6mA current draw
     digitalWrite(pinSensorPower, LOW);
-    gsData.month = Clock.month;
-    gsData.day = Clock.dayOfMonth;
-    gsData.hour = Clock.hour;
-    gsData.minute = Clock.minute;
+    rtc_get_clock(Clock);
+    gsData.month = Clock.tm_mon+1;
+    gsData.day = Clock.tm_mday;
+    gsData.hour = Clock.tm_hour;
+    gsData.minute = Clock.tm_min;
     gsData.batteryVoltage = battery_voltage();
     gsData.superCapVoltage = supercap_voltage();
     gsData.sensorThreshold = Schedule.sensorThreshold;
@@ -138,6 +133,17 @@ void setup() {
           }
         // upload today's data
         gs_update(gsData);
+        // correct the RTC clock if different from NTP time
+        struct tm localTime;
+        if (ntp_get_local_time(localTime) == true) {          
+          rtc_get_clock(Clock);
+          if ((localTime.tm_year != Clock.tm_year) || (localTime.tm_mon != Clock.tm_mon) || (localTime.tm_mday != Clock.tm_mday)  ||
+            (localTime.tm_wday != Clock.tm_wday) || (localTime.tm_hour != Clock.tm_hour) || (localTime.tm_min != Clock.tm_min)  ||
+            (localTime.tm_sec != Clock.tm_sec)) {                
+              rtc_set_clock(localTime);
+              Serial.println("Updated RTC from NTP");
+              }
+            }
         }
       else {
         // unable to connect to internet, append today's data to the buffer queue

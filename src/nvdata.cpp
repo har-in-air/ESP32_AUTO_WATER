@@ -15,6 +15,8 @@ LOG_BUFFER_t LogBuffer;
 #define DEFAULT_GS_UPDATE     0  
 #define DEFAULT_WIFI_SSID     "ssid"
 #define DEFAULT_WIFI_PASSWORD "password"
+#define DEFAULT_UTC_OFFSET_SECS    (330*60)
+#define DEFAULT_DAYLIGHT_OFFSET_SECS    (0)
 
 void  gs_config_load(GS_CONFIG_t &gsConfig){
   // open in read only mode
@@ -23,12 +25,16 @@ void  gs_config_load(GS_CONFIG_t &gsConfig){
     gsConfig.update = DEFAULT_GS_UPDATE;
     gsConfig.wifiSSID = DEFAULT_WIFI_SSID;
     gsConfig.wifiPassword = DEFAULT_WIFI_PASSWORD;
+    gsConfig.utcOffsetSeconds = DEFAULT_UTC_OFFSET_SECS;
+    gsConfig.daylightOffsetSeconds = DEFAULT_DAYLIGHT_OFFSET_SECS;
     gs_config_store(gsConfig);
     } 
   else {
     gsConfig.update = Prefs.getUInt("update", DEFAULT_GS_UPDATE);
     gsConfig.wifiSSID = Prefs.getString("wifiSSID", DEFAULT_WIFI_SSID);
     gsConfig.wifiPassword = Prefs.getString("wifiPassword", DEFAULT_WIFI_PASSWORD);
+    gsConfig.utcOffsetSeconds = Prefs.getInt("utcOffset", DEFAULT_UTC_OFFSET_SECS);
+    gsConfig.daylightOffsetSeconds = Prefs.getInt("daylightOffset", DEFAULT_DAYLIGHT_OFFSET_SECS);
     Prefs.end();
     }
 }
@@ -39,6 +45,8 @@ void gs_config_store(GS_CONFIG_t &gsConfig){
   Prefs.putUInt("update", gsConfig.update); 
   Prefs.putString("wifiSSID", gsConfig.wifiSSID); 
   Prefs.putString("wifiPassword", gsConfig.wifiPassword); 
+  Prefs.putInt("utcOffset", gsConfig.utcOffsetSeconds);
+  Prefs.putInt("daylightOffset", gsConfig.daylightOffsetSeconds);
   Prefs.end();
   }
 
