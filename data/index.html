@@ -4,7 +4,6 @@
 <title>ESP32 Water Timer</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta charset="UTF-8">
-<meta http-equiv="refresh" content="10">
 <link rel="stylesheet" type="text/css" href="style.css">
 </head>
 <body>
@@ -14,18 +13,24 @@
 <p><span>Battery Voltage : </span><span id="batteryVoltage">%BATTERY_VOLTAGE%v</span></p>
 <p><span>SuperCap Voltage : </span><span id="superCapVoltage">%SUPERCAP_VOLTAGE%v</span></p>
 <p><span>Date/Time : </span><span id="dateTime">%RTC_YEAR%-%RTC_MONTH%-%RTC_DOM% %RTC_DOW% %RTC_HOUR%:%RTC_MINUTE%:%RTC_SECOND%</span></p>
-<div>
-<input type="checkbox" name="gsUpdate" id="gsUpdate" value="true" %GS_UPDATE%/><label for="gsUpdate">Google Sheet Update</label>
-</div>  
 <p>
-<fieldset><legend>Internet Credentials</legend>
+<fieldset><legend>WiFi / Internet</legend>
 <form action="/get">
+Google Sheet Update
+<input type="radio" id="gsUpdateOff" name="gsUpdate" onclick="handleClick(this);" value="off" %GS_UPDATE_OFF%>
+<label for="gsUpdateOff">Off</label>
+
+<input type="radio" id="gsUpdateOn"  name="gsUpdate"  onclick="handleClick(this);" value="on" %GS_UPDATE_ON%>
+<label for="gsUpdateOn">On</label>
+<br>
+<div style="display:%DISPLAY_INTERNET%;" id="div_internet">
 <table>
-<tr><td>SSID</td><td><input type="text" name="wifiSSID" value="%WIFI_SSID%"></td></tr>
-<tr><td>Password</td><td><input type="password" name="wifiPassword" value="%WIFI_PASSWORD%"></td></tr>
-<tr><td>UTC Offset (seconds)</td><td><input type="number" name="utcOffset" value="%UTC_OFFSET%"></td></tr>
-<tr><td>Daylight Offset (seconds)</td><td><input type="number" name="daylightOffset" value="%DAYLIGHT_OFFSET%"></td></tr>
+<tr><td>Access Point SSID</td><td><input type="text" id="wifiSSID" name=wifiSSID value="%WIFI_SSID%"></td></tr>
+<tr><td>Access Point Password</td><td><input type="password" id="wifiPassword" name=wifiPassword value="%WIFI_PASSWORD%"></td></tr>
+<tr><td>UTC Offset (seconds)</td><td><input type="number" id="utcOffset" name=utcOffset value="%UTC_OFFSET%"></td></tr>
+<tr><td>Daylight Offset (seconds)</td><td><input type="number" id="daylightOffset" name=daylightOffset value="%DAYLIGHT_OFFSET%"></td></tr>
 </table>
+</div>
 <p>
 <input type="submit" value="Submit">
 </p>
@@ -44,8 +49,9 @@
 <input type="submit" value="Submit">
 </p>
 </form>
-
 </fieldset>
+
+<div id="div_rtc">
 <fieldset><legend>RTC Date/Time</legend>
 <form action="/get">
 <table>
@@ -62,6 +68,8 @@
 </p>
 </fieldset>
 </form>
+</div>
+
 <p>
 <div style="text-align:center;">
 <button style="text-align:center;" onclick="upload_handler()">Update Firmware</button>
@@ -85,9 +93,9 @@ function upload_handler() {
   document.getElementById("upload").innerHTML = uploadform;
   }
 
+
 function uploadFile() {
   var file = document.getElementById("file1").files[0];
-  // alert(file.name+" | "+file.size+" | "+file.type);
   var formdata = new FormData();
   formdata.append("file1", file);
   var ajax = new XMLHttpRequest();
@@ -122,6 +130,16 @@ function upload_error_handler(event) {
 function upload_abort_handler(event) {
   document.getElementById("status").innerHTML = "Aborted";
   }
+
+function handleClick(myRadio) {
+  if(myRadio.value == "on"){
+    document.getElementById("div_internet").style.display = "";
+    }
+  else{
+    document.getElementById("div_internet").style.display = "none";
+    }
+  }
+
 </script>
 </body>
 </html>

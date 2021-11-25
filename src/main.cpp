@@ -16,7 +16,7 @@
 #define pinSDA          27
 #define pinSCL          14
 
-const char* FirmwareRevision = "1.20";
+const char* FirmwareRevision = "1.21";
 
 void setup() {
   pinMode(pinSensorPower, OUTPUT);
@@ -152,7 +152,8 @@ void setup() {
         }
      log_buffer_store(LogBuffer);
      }
-
+    Serial.println("Entering deep sleep");
+    Serial.flush();
     delay(100);    
     // for testing google sheets update, use esp32 wakeup timer for wakeup after 60seconds
     //Serial.println("Set next wakeup time for +1 minute");

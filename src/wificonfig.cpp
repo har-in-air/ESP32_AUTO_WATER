@@ -38,22 +38,32 @@ static void server_feed_watchdog() {
     TIMERG0.wdt_wprotect = 0;
     }
 
+
 static void server_not_found(AsyncWebServerRequest *request) {
   request->send(404, "text/plain", "Not found");
   }
 
+
 // Replace %xx% placeholder 
 static String server_string_processor(const String& var){
-  
   if(var == "FIRMWARE_REVISION"){
     return FirmwareRevision;
     }
   else
-  // Google Sheet update 
-  if(var == "GS_UPDATE"){
+  // Google Sheet update checkbox
+  if(var == "GS_UPDATE_OFF"){
+    return GSConfig.update ? "" : "checked";
+    }
+  else
+  if(var == "GS_UPDATE_ON"){
     return GSConfig.update ? "checked" : "";
     }
   else
+  if(var == "DISPLAY_INTERNET"){
+    return GSConfig.update ? "" : "none";
+    }
+  else
+  // Internet access credentials
   if(var == "WIFI_SSID"){
     return GSConfig.wifiSSID;
     }
@@ -70,7 +80,7 @@ static String server_string_processor(const String& var){
     return String(GSConfig.daylightOffsetSeconds);
     }
   else
-  // internal history
+  // current sensor readings
   if(var == "BATTERY_VOLTAGE"){
     return String(BatteryVoltage, 1);
     }
@@ -187,10 +197,10 @@ void wifi_access_point_init() {
     int gsupdate = 0;
     // Google Sheet update option
     if (request->hasParam("gsUpdate")) {
-      // gsUpdate is added to GET request only if box is checked
       inputMessage = request->getParam("gsUpdate")->value();
       bGSConfigChange = true; 
-      gsupdate = 1;
+      Serial.print("gsUpdate = ");Serial.println(inputMessage);
+      gsupdate = (inputMessage == "off" ? 0 : 1); 
       }
     // Internet Access Credentials  
     if (request->hasParam("wifiSSID")) {

@@ -62,7 +62,7 @@ bool rtc_get_clock(struct tm &clock){
     b = Wire.read();
     clock.tm_year = ((b&0x0F) + 10*((b>>4)&0x0F)); 
     clock.tm_year += 100; // RTC uses 00-99, tm uses years since 1900
-    Serial.printf("RTC Clock : %04d-%02d-%02d %s %02d:%02d:%02d\n",  1900+clock.tm_year, 1+clock.tm_mon, clock.tm_mday, SzDayOfWeek[clock.tm_wday], clock.tm_hour, clock.tm_min, clock.tm_sec);
+    //Serial.printf("RTC Clock : %04d-%02d-%02d %s %02d:%02d:%02d\n",  1900+clock.tm_year, 1+clock.tm_mon, clock.tm_mday, SzDayOfWeek[clock.tm_wday], clock.tm_hour, clock.tm_min, clock.tm_sec);
     return true;
 		}
 else {

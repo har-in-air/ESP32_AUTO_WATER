@@ -4,7 +4,7 @@
 #include "nvdata.h"
 #include "gs_update.h"
 
-static String GS_ID = "--your google spreadsheet id goes here--";
+static String GS_ID = "-- your google sheet id goes here --";
 static String GS_Sheet = "AutoWater";
 
 static String SzMonth[12]= {"Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"};
