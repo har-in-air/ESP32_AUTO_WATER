@@ -8,19 +8,23 @@ The system is self-contained. No mains power supply or connection to a water fau
 
 In normal watering mode, the ESP32 is woken up from deep-sleep once a day at a scheduled time by the DS3231 RTC. It checks the soil moisture level and if required, turns on the water pump. 
 
-It then optionally logs the calendar date and time, moisture sensor reading, power supply voltages and watering duration as a row of entries in a Google Docs spreadsheet document. 
+It then optionally logs the calendar date and time, moisture sensor reading, power supply voltages, watering duration, RTC clock drift (compared to NTP time) as a row of entries in a Google Docs spreadsheet document. 
 
-If Google Sheet uploading is enabled and the configured Internet Access Point is not available at the scheduled time, the data record is appended to a buffer and saved to flash. If the IAP is available, the queued data records are first uploaded to the spreadsheet, and then the current data record is uploaded. Up to 30 records (30 days) can be buffered, after which the oldest record will be over-written by the current day's data record.
+If Google Sheet uploading is enabled and the configured Internet Access Point is not available, the data record is appended to a buffer and saved to ESP32 flash memory. If internet access is available, any queued data records are uploaded before the current data record. Up to 30 records (30 days) can be buffered in ESP32 flash. After 30 days, the oldest record will be over-written by the current day's data record.
 
 <img src="docs/autowater_gs_update.png" />
 
 If you want to configure the watering systems, press the reset button for the ESP32 module and then press the configuration button (GPIO0) when you hear a series of short beeps. Keep it pressed until you hear a long confirmation tone, and then release. The system is now configured as a stand-alone WiFi Access Point (AP) with SSID `ESP32Timer` and password `123456789`.
 
 A web server running on this AP at `url : http://192.168.4.1` can then be used to configure the following :
-* Google Sheet update
+* Configure Options
   * Enable / disable uploading of data to the spreadsheet
-  * AP SSID and password for internet access
-* Schedule
+  * Google Sheet URL ID
+  * Google Sheet tab name
+  * Internet Access Point SSID 
+  * Internet Access Point password
+  * Local Time Zone offset from UTC
+  * Local Daylight Savings offset
   * Daily wake-up time
   * Soil moisture threshold for watering
   * Pump on-time
@@ -28,11 +32,14 @@ A web server running on this AP at `url : http://192.168.4.1` can then be used t
   * Date
   * Time
 
-When done with changes, reset the ESP32 for normal watering mode with the new configuration.
+Note that the RTC configuration is useful for initial setting. If Google Sheet update is enabled and
+internet access is available, the system will obtain the local time from a Network Time Protocol (NTP) server and correct the RTC if required.  The RTC error (NTP time minus RTC time) is also logged to the Google Sheet. The error should be no more than a few seconds each day with the DS3231 RTC.
+
+When done with web page configuration changes, reset the ESP32 for normal watering mode with the new configuration.
 
 <img src="docs/ap_config_homepage.png" />
 
-You can also update the firmware via this AP, as the watering system may not be conveniently located for serial port cable-based programming. After the new firmware binary file is uploaded, the ESP32 will automatically re-start with the updated firmware.
+The watering system may not be conveniently located for cable-based programming. So you can also update the firmware via this configuration server page.  After the new firmware binary file is uploaded, the ESP32 will automatically re-start with the updated firmware.
 
 <img src="docs/ap_firmware_update.png" />
 
