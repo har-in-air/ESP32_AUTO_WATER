@@ -4,9 +4,6 @@
 #include "nvdata.h"
 #include "gs_update.h"
 
-static String GS_ID = "-- your google sheet id goes here --";
-static String GS_Sheet = "AutoWater";
-
 static String SzMonth[12]= {"Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"};
 
 #define USE_HTTP
@@ -44,8 +41,8 @@ bool gs_update(GS_DATA_t &data) {
     Serial.println("connection failed");
     return false;
     }
-  String url = "/macros/s/" + GS_ID + "/exec?";
-  url += "id=" + GS_Sheet;
+  String url = "/macros/s/" + GSConfig.gsID + "/exec?";
+  url += "id=" + GSConfig.gsSheet;
   url += "&Date=" + SzMonth[data.month-1] + String(data.day);
   url += "&Time="  + String(data.hour) + ":" + String(data.minute);
   url += "&SensorReading=" + String(data.sensorReading);
@@ -53,6 +50,7 @@ bool gs_update(GS_DATA_t &data) {
   url += "&OnTimeSeconds=" + String(data.onTimeSeconds);
   url += "&BatteryVoltage=" + String(data.batteryVoltage, 1);
   url += "&SuperCapVoltage=" + String(data.superCapVoltage, 1);
+  url += "&NTPminusRTC=" + (data.rtcError == RTC_ERROR_NOT_CALC ? "N.A." : String(data.rtcError));
   Serial.print("requesting URL: "); Serial.println(url);
   client.print(String("GET ") + url + " HTTP/1.1\r\n" +
     "Host: " + SzGSHost + "\r\n" +
@@ -120,8 +118,8 @@ const char* root_ca= \
 bool gs_update(GS_DATA_t &data) {
   if (WiFi.status() != WL_CONNECTED) return false;
   HTTPClient http;
-  String url = "https://script.google.com/macros/s/" + GS_ID + "/exec?";
-  url += "id=" + GS_Sheet;
+  String url = "https://script.google.com/macros/s/" + GSConfig.gsID + "/exec?";
+  url += "id=" + GSConfig.gsSheet;
   url += "&Date=" + SzMonth[data.month-1] + String(data.day);
   url += "&Time="  + String(data.hour) + ":" + (data.minute < 10 ? "0" + String(data.minute) : String(data.minute));
   url += "&SensorReading=" + String(data.sensorReading);
@@ -129,6 +127,7 @@ bool gs_update(GS_DATA_t &data) {
   url += "&OnTimeSeconds=" + String(data.onTimeSeconds);
   url += "&BatteryVoltage=" + String(data.batteryVoltage, 1);
   url += "&SuperCapVoltage=" + String(data.superCapVoltage, 1);
+  url += "&NTPminusRTC=" + (data.rtcError == RTC_ERROR_NOT_CALC ? "N.A." : String(data.rtcError));
   http.begin(url, root_ca); 
   int httpCode = http.GET();
   http.end();

@@ -82,10 +82,11 @@ void setup() {
     GS_DATA_t gsData;
     analogRead(pinADCSensor); // dummy sensor read, throwaway sample
     delay(50);
-    // date & time stamp, sensor and threshold data 
+    // get sensor data sample
     gsData.sensorReading = sensor_reading();
-    // power off sensor, reduce 6mA current draw
+    // power off sensor, reduces current draw by 6mA
     digitalWrite(pinSensorPower, LOW);
+    // date and time stamp, voltages
     rtc_get_clock(Clock);
     gsData.month = Clock.tm_mon+1;
     gsData.day = Clock.tm_mday;
@@ -98,6 +99,7 @@ void setup() {
     Serial.printf("SuperCap Voltage %.1fV\n", gsData.superCapVoltage);
     Serial.printf("Sensor Threshold %d\n", gsData.sensorThreshold);
     Serial.printf("Sensor Reading %d\n", gsData.sensorReading); 
+    gsData.rtcError = RTC_ERROR_NOT_CALC;
     
     if (gsData.sensorReading > (int)Schedule.sensorThreshold) {
       // soil is dry, needs watering
@@ -124,6 +126,18 @@ void setup() {
       Serial.println("Updating google sheet - AutoWater");
       if (gs_init() == true) {
         // connected to Internet access point
+        // correct the RTC clock if different from NTP time
+        struct tm ntpTime;
+        if (ntp_get_local_time(ntpTime) == true) {          
+          rtc_get_clock(Clock);
+          gsData.rtcError = ntp_rtc_diff(ntpTime, Clock);
+          if ((ntpTime.tm_year != Clock.tm_year) || (ntpTime.tm_mon != Clock.tm_mon) || (ntpTime.tm_mday != Clock.tm_mday)  ||
+            (ntpTime.tm_wday != Clock.tm_wday) || (ntpTime.tm_hour != Clock.tm_hour) || (ntpTime.tm_min != Clock.tm_min)  ||
+            (ntpTime.tm_sec != Clock.tm_sec)) {                
+              rtc_set_clock(ntpTime);
+              Serial.println("Updated RTC from NTP");
+              }
+            }
         // if there are unsent data records, upload them first starting from the oldest
         while (LogBuffer.numEntries > 0) {
           GS_DATA_t logData;
@@ -133,17 +147,6 @@ void setup() {
           }
         // upload today's data
         gs_update(gsData);
-        // correct the RTC clock if different from NTP time
-        struct tm localTime;
-        if (ntp_get_local_time(localTime) == true) {          
-          rtc_get_clock(Clock);
-          if ((localTime.tm_year != Clock.tm_year) || (localTime.tm_mon != Clock.tm_mon) || (localTime.tm_mday != Clock.tm_mday)  ||
-            (localTime.tm_wday != Clock.tm_wday) || (localTime.tm_hour != Clock.tm_hour) || (localTime.tm_min != Clock.tm_min)  ||
-            (localTime.tm_sec != Clock.tm_sec)) {                
-              rtc_set_clock(localTime);
-              Serial.println("Updated RTC from NTP");
-              }
-            }
         }
       else {
         // unable to connect to internet, append today's data to the buffer queue
@@ -152,6 +155,7 @@ void setup() {
         }
      log_buffer_store(LogBuffer);
      }
+     
     Serial.println("Entering deep sleep");
     Serial.flush();
     delay(100);    

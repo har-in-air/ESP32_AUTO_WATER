@@ -12,8 +12,10 @@ typedef struct {
   uint8_t onTimeSeconds;
   float batteryVoltage;
   float superCapVoltage;
+  int32_t rtcError;
 } GS_DATA_t;
 
+#define RTC_ERROR_NOT_CALC 9999
 
 bool gs_init();
 bool gs_update(GS_DATA_t &data);

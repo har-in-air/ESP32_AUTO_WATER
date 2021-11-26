@@ -7,30 +7,33 @@ SCHEDULE_t Schedule;
 GS_CONFIG_t GSConfig;
 LOG_BUFFER_t LogBuffer;
 
-#define DEFAULT_SCHEDULE_HOUR     11
+#define MODE_READ_WRITE  false
+#define MODE_READ_ONLY   true
+
+#define DEFAULT_SCHEDULE_HOUR     12
 #define DEFAULT_SCHEDULE_MINUTE   0
-#define DEFAULT_SENSOR_THRESHOLD  600
+#define DEFAULT_SENSOR_THRESHOLD  400
 #define DEFAULT_ON_TIME_SECONDS   20
 
-#define DEFAULT_GS_UPDATE     0  
-#define DEFAULT_WIFI_SSID     "ssid"
-#define DEFAULT_WIFI_PASSWORD "password"
+#define DEFAULT_GS_UPDATE        1
+#define DEFAULT_GS_ID           "google_sheet_id"  
+#define DEFAULT_GS_SHEET        "sheet_name"  
+#define DEFAULT_WIFI_SSID       "ssid"
+#define DEFAULT_WIFI_PASSWORD   "password"
 #define DEFAULT_UTC_OFFSET_SECS    (330*60)
 #define DEFAULT_DAYLIGHT_OFFSET_SECS    (0)
 
+
 void  gs_config_load(GS_CONFIG_t &gsConfig){
-  // open in read only mode
-  if (Prefs.begin("gs_config", true) == false) {
+  if (Prefs.begin("gsconfig", MODE_READ_ONLY) == false) {
+    Serial.println("Preferences 'gsconfig' namespace not found, creating with defaults.");
     Prefs.end();
-    gsConfig.update = DEFAULT_GS_UPDATE;
-    gsConfig.wifiSSID = DEFAULT_WIFI_SSID;
-    gsConfig.wifiPassword = DEFAULT_WIFI_PASSWORD;
-    gsConfig.utcOffsetSeconds = DEFAULT_UTC_OFFSET_SECS;
-    gsConfig.daylightOffsetSeconds = DEFAULT_DAYLIGHT_OFFSET_SECS;
-    gs_config_store(gsConfig);
+    gs_config_reset(gsConfig);
     } 
   else {
     gsConfig.update = Prefs.getUInt("update", DEFAULT_GS_UPDATE);
+    gsConfig.gsID = Prefs.getString("gsID", DEFAULT_GS_ID);
+    gsConfig.gsSheet = Prefs.getString("gsSheet", DEFAULT_GS_SHEET);
     gsConfig.wifiSSID = Prefs.getString("wifiSSID", DEFAULT_WIFI_SSID);
     gsConfig.wifiPassword = Prefs.getString("wifiPassword", DEFAULT_WIFI_PASSWORD);
     gsConfig.utcOffsetSeconds = Prefs.getInt("utcOffset", DEFAULT_UTC_OFFSET_SECS);
@@ -39,10 +42,23 @@ void  gs_config_load(GS_CONFIG_t &gsConfig){
     }
 }
 
+void gs_config_reset(GS_CONFIG_t &gsConfig) {
+  gsConfig.update = DEFAULT_GS_UPDATE;
+  gsConfig.gsID = DEFAULT_GS_ID; 
+  gsConfig.gsSheet = DEFAULT_GS_SHEET;
+  gsConfig.wifiSSID = DEFAULT_WIFI_SSID;
+  gsConfig.wifiPassword = DEFAULT_WIFI_PASSWORD;
+  gsConfig.utcOffsetSeconds = DEFAULT_UTC_OFFSET_SECS;
+  gsConfig.daylightOffsetSeconds = DEFAULT_DAYLIGHT_OFFSET_SECS;
+  gs_config_store(gsConfig);
+  }
+
 void gs_config_store(GS_CONFIG_t &gsConfig){
-  Prefs.begin("gs_config", false); // read/write
-  //Prefs.clear();
+  Prefs.begin("gsconfig", MODE_READ_WRITE);
+  Prefs.clear(); 
   Prefs.putUInt("update", gsConfig.update); 
+  Prefs.putString("gsID", gsConfig.gsID); 
+  Prefs.putString("gsSheet", gsConfig.gsSheet); 
   Prefs.putString("wifiSSID", gsConfig.wifiSSID); 
   Prefs.putString("wifiPassword", gsConfig.wifiPassword); 
   Prefs.putInt("utcOffset", gsConfig.utcOffsetSeconds);
@@ -52,14 +68,10 @@ void gs_config_store(GS_CONFIG_t &gsConfig){
 
 
 void schedule_load(SCHEDULE_t &schedule) {
-  // open in read-only mode
-  if (Prefs.begin("schedule", true) == false) {
+  if (Prefs.begin("schedule", MODE_READ_ONLY) == false) {
+    Serial.println("Preferences 'schedule' namespace not found, creating with defaults.");
     Prefs.end();
-    schedule.hour = DEFAULT_SCHEDULE_HOUR;
-    schedule.minute = DEFAULT_SCHEDULE_MINUTE;
-    schedule.sensorThreshold = DEFAULT_SENSOR_THRESHOLD;
-    schedule.onTimeSeconds = DEFAULT_ON_TIME_SECONDS;
-    schedule_store(schedule);
+    schedule_reset(schedule);
     } 
   else {
     schedule.hour = Prefs.getUInt("hour", DEFAULT_SCHEDULE_HOUR);
@@ -71,9 +83,18 @@ void schedule_load(SCHEDULE_t &schedule) {
   }  
 
 
+void schedule_reset(SCHEDULE_t &schedule){
+  schedule.hour = DEFAULT_SCHEDULE_HOUR;
+  schedule.minute = DEFAULT_SCHEDULE_MINUTE;
+  schedule.sensorThreshold = DEFAULT_SENSOR_THRESHOLD;
+  schedule.onTimeSeconds = DEFAULT_ON_TIME_SECONDS;
+  schedule_store(schedule);
+  }
+
+
 void schedule_store(SCHEDULE_t &schedule) {
-  Prefs.begin("schedule", false); // read/write mode
-  //Prefs.clear();
+  Prefs.begin("schedule", MODE_READ_WRITE); 
+  Prefs.clear();
   Prefs.putUInt("hour", schedule.hour);
   Prefs.putUInt("minute", schedule.minute);
   Prefs.putUInt("sensorThreshold", schedule.sensorThreshold);
@@ -81,33 +102,43 @@ void schedule_store(SCHEDULE_t &schedule) {
   Prefs.end();
   }
 
+
 void log_buffer_load(LOG_BUFFER_t &logBuffer) {
-  // open in read-only mode
-  if (Prefs.begin("logbuffer", true) == false) {
+  if (Prefs.begin("logbuffer", MODE_READ_ONLY) == false) {
+    Serial.println("Preferences 'logbuffer' namespace not found, creating with defaults.");
     Prefs.end();
-    log_buffer_clear(logBuffer);
-    log_buffer_store(logBuffer);
+    log_buffer_reset(logBuffer);
     } 
   else {
-    Prefs.getBytes("logbuffer", (void*)&logBuffer, sizeof(LOG_BUFFER_t));
-    Prefs.end();
-    // sanity check
-    if (logBuffer.numEntries > NUM_LOG_RECORDS) {
-      log_buffer_clear(logBuffer);
-      log_buffer_store(logBuffer);
+    if (Prefs.getBytesLength("logbuffer") != sizeof(LOG_BUFFER_t)) {
+      Serial.println("Prefs : logbuffer<->LOG_BUFFER_t size mismatch, resetting.");
+      Prefs.end();
+      log_buffer_reset(logBuffer);
+      }
+    else {
+      Prefs.getBytes("logbuffer", (void*)&logBuffer, sizeof(LOG_BUFFER_t));
+      Prefs.end();
+      // sanity check
+      if (logBuffer.numEntries > NUM_LOG_RECORDS) {
+        Serial.println("Prefs : logbuffer numEntries > NUM_LOG_RECORDS, resetting.");
+        log_buffer_reset(logBuffer);
+        }
       }
     }
   }  
 
 
 void log_buffer_store(LOG_BUFFER_t &logBuffer) {
-  Prefs.begin("logbuffer", false); // read/write mode
+  Prefs.begin("logbuffer", MODE_READ_WRITE);
+  Prefs.clear();
   Prefs.putBytes("logbuffer", (const void*)&logBuffer, sizeof(LOG_BUFFER_t));
   Prefs.end();
   }
 
-void log_buffer_clear(LOG_BUFFER_t &logBuffer) {
+
+void log_buffer_reset(LOG_BUFFER_t &logBuffer){
   memset((void*)&logBuffer, 0 , sizeof(LOG_BUFFER_t));
+  log_buffer_store(logBuffer);
   }
 
 bool log_buffer_enqueue(LOG_BUFFER_t &logBuffer, GS_DATA_t &gsData){

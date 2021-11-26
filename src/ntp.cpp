@@ -21,3 +21,9 @@ bool ntp_get_local_time(struct tm &localTime) {
   //localTime.tm_hour, localTime.tm_min, localTime.tm_sec); 
   return true;
 }
+
+int32_t ntp_rtc_diff(struct tm &ntp, struct tm &rtc) {
+  int32_t ntpSeconds = ntp.tm_hour*3600 + ntp.tm_min*60 + ntp.tm_sec;
+  int32_t rtcSeconds = rtc.tm_hour*3600 + rtc.tm_min*60 + rtc.tm_sec;
+  return (ntpSeconds - rtcSeconds);
+  }

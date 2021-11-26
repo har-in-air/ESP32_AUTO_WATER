@@ -63,7 +63,15 @@ static String server_string_processor(const String& var){
     return GSConfig.update ? "" : "none";
     }
   else
-  // Internet access credentials
+  // Google Sheet ID, Internet access credentials
+  if(var == "GS_ID"){
+    return GSConfig.gsID;
+    }
+  else
+  if(var == "GS_SHEET"){
+    return GSConfig.gsSheet;
+    }
+  else
   if(var == "WIFI_SSID"){
     return GSConfig.wifiSSID;
     }
@@ -189,20 +197,35 @@ void wifi_access_point_init() {
     request->send(SPIFFS, "/style.css", "text/css");
   });
 
+  server.on("/reset", HTTP_GET, [] (AsyncWebServerRequest *request) {
+    gs_config_reset(GSConfig);
+    schedule_reset(Schedule);
+    log_buffer_reset(LogBuffer);
+    request->send(200, "text/html", "Reset Complete<br><a href=\"/\">Return to Home Page</a>");  
+  });
+
   server.on("/get", HTTP_GET, [] (AsyncWebServerRequest *request) {
     String inputMessage;
     bool bScheduleChange = false;
     bool bRTCChange = false;
     bool bGSConfigChange = false;
-    int gsupdate = 0;
     // Google Sheet update option
     if (request->hasParam("gsUpdate")) {
       inputMessage = request->getParam("gsUpdate")->value();
       bGSConfigChange = true; 
-      Serial.print("gsUpdate = ");Serial.println(inputMessage);
-      gsupdate = (inputMessage == "off" ? 0 : 1); 
+      GSConfig.update = (inputMessage == "off" ? 0 : 1); 
       }
-    // Internet Access Credentials  
+    // Google Sheet, Internet Access Credentials  
+    if (request->hasParam("gsID")) {
+      inputMessage = request->getParam("gsID")->value();
+      bGSConfigChange = true; 
+      GSConfig.gsID = inputMessage;
+      }
+    if (request->hasParam("gsSheet")) {
+      inputMessage = request->getParam("gsSheet")->value();
+      bGSConfigChange = true; 
+      GSConfig.gsSheet = inputMessage;
+      }
     if (request->hasParam("wifiSSID")) {
       inputMessage = request->getParam("wifiSSID")->value();
       bGSConfigChange = true; 
@@ -224,7 +247,7 @@ void wifi_access_point_init() {
       GSConfig.daylightOffsetSeconds = inputMessage.toInt();
       }
       
-    // Desired Schedule 
+    // Watering Schedule 
     if (request->hasParam("scheduleHour")) {
       inputMessage = request->getParam("scheduleHour")->value();
       bScheduleChange = true; 
@@ -293,8 +316,7 @@ void wifi_access_point_init() {
       bRTCChange = false;
       }
     if (bGSConfigChange == true) {
-      Serial.println("Google Sheet update parameters changed");
-      GSConfig.update = gsupdate;
+      Serial.println("Google Sheet/Internet Access parameters changed");
       Serial.printf("update %d\n", GSConfig.update);
       gs_config_store(GSConfig);
       bGSConfigChange = false;
@@ -308,7 +330,7 @@ void wifi_access_point_init() {
       rtc_set_daily_alarm(alarm);
       bScheduleChange = false;
       }
-    request->send(200, "text/html", "Input Received<br><a href=\"/\">Return to Home Page</a>");  
+    request->send(200, "text/html", "Input Processed<br><a href=\"/\">Return to Home Page</a>");  
   });
 
   server.begin();

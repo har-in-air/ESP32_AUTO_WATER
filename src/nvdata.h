@@ -19,6 +19,8 @@ typedef struct {
 
 typedef struct {
   uint32_t update;
+  String gsID;
+  String gsSheet;
   String wifiSSID;
   String wifiPassword;
   int32_t utcOffsetSeconds;
@@ -40,13 +42,15 @@ extern LOG_BUFFER_t LogBuffer;
 
 void schedule_store(SCHEDULE_t &schedule);
 void schedule_load(SCHEDULE_t &schedule);
+void schedule_reset(SCHEDULE_t &schedule);
 
 void gs_config_store(GS_CONFIG_t &gsConfig);
 void gs_config_load(GS_CONFIG_t &gsConfig);
+void gs_config_reset(GS_CONFIG_t &gsConfig);
 
 void log_buffer_store(LOG_BUFFER_t &logBuffer);
 void log_buffer_load(LOG_BUFFER_t &logBuffer);
-void log_buffer_clear(LOG_BUFFER_t &logBuffer);
+void log_buffer_reset(LOG_BUFFER_t &logBuffer);
 bool log_buffer_enqueue(LOG_BUFFER_t &logBuffer, GS_DATA_t &gsData);
 bool log_buffer_dequeue(LOG_BUFFER_t &logBuffer, GS_DATA_t &gsData);
  
