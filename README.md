@@ -14,10 +14,10 @@ If Google Sheet uploading is enabled and the configured Internet Access Point is
 
 <img src="docs/autowater_gs_update.png" />
 
-If you want to configure the watering systems, press the reset button for the ESP32 module and then press the configuration button (GPIO0) when you hear a series of short beeps. Keep it pressed until you hear a long confirmation tone, and then release. The system is now configured as a stand-alone WiFi Access Point (AP) with SSID `ESP32Timer` and password `123456789`.
+To configure the watering system, press the reset button for the ESP32 module and then immediately press the configuration button (GPIO0) when you hear a pulsing tone. Keep it pressed until you hear a long confirmation tone, and then release. The system is now configured as a stand-alone WiFi Access Point (AP) with SSID `ESP32Timer` and password `123456789`.
 
 A web server running on this AP at `url : http://192.168.4.1` can then be used to configure the following :
-* Configure Options
+* System Options
   * Enable / disable uploading of data to the spreadsheet
   * Google Sheet URL ID
   * Google Sheet tab name
@@ -33,15 +33,58 @@ A web server running on this AP at `url : http://192.168.4.1` can then be used t
   * Time
 
 Note that the RTC configuration is useful for initial setting. If Google Sheet update is enabled and
-internet access is available, the system will obtain the local time from a Network Time Protocol (NTP) server and correct the RTC if required.  The RTC error (NTP time minus RTC time) is also logged to the Google Sheet. The error should be no more than a few seconds each day with the DS3231 RTC.
+internet access is available, the system will get the local time from a Network Time Protocol (NTP) server and correct the RTC if required.  The error in seconds (NTP time minus RTC time) is also logged to the Google Sheet.
 
-When done with web page configuration changes, reset the ESP32 for normal watering mode with the new configuration.
+When done with web page configuration changes, press the reset button on the ESP32 module for normal watering mode with the new configuration.
 
 <img src="docs/ap_config_homepage.png" />
 
 The watering system may not be conveniently located for cable-based programming. So you can also update the firmware via this configuration server page.  After the new firmware binary file is uploaded, the ESP32 will automatically re-start with the updated firmware.
 
 <img src="docs/ap_firmware_update.png" />
+
+# Normal Watering Mode execution log after wake-up
+
+The sensor was disconnected for this run (reading = 0). 
+
+So, when
+
+* Google Sheet update is enabled
+* Internet access is available
+* Watering is not required
+* No queued unsent records
+
+the total time taken is ~14 seconds. If watering is required, ~34 seconds assuming the default
+pump on-time of 20 seconds. Note that Google Sheets returns a redirect HTTP code (302) so this is
+the expected value.
+
+```
+EspWaterTimer v1.30 compiled on Nov 27 2021 at 12:27:40
+
+Number queued (unsent) records = 0
+GS Update required = true
+Loaded Schedule
+        time = 12:00
+        sensor threshold = 360
+        ton time = 20 secs
+RTC Alarm2 : Daily @ 12:00
+
+For WiFi AP mode, press and hold button (GPIO0) until you hear a long tone
+
+====== Normal Watering Mode ======
+Battery Voltage 4.1V
+SuperCap Voltage 14.7V
+Sensor Threshold 360
+Sensor Reading 0
+On Time 0 secs
+Watering not required
+Setting alarm for next day
+Updating google sheet - AutoWater
+Connected, IP Address : 192.168.146.127
+Updated RTC from NTP
+Http Code expect 302, received 302
+Total time taken = 14seconds, entering deep sleep
+```
 
 # Build Environment
 * Ubuntu 20.04 LTS amdx64

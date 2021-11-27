@@ -12,13 +12,13 @@
 <p><span>Sensor Reading : </span><span id="sensorReading">%SENSOR_READING%</span></p>
 <p><span>Battery Voltage : </span><span id="batteryVoltage">%BATTERY_VOLTAGE%v</span></p>
 <p><span>SuperCap Voltage : </span><span id="superCapVoltage">%SUPERCAP_VOLTAGE%v</span></p>
-<p><span>Date/Time : </span><span id="dateTime">%RTC_YEAR%-%RTC_MONTH%-%RTC_DOM% %RTC_DOW% %RTC_HOUR%:%RTC_MINUTE%:%RTC_SECOND%</span></p>
+<p><span>Date and Time : </span><span id="dateTime">%RTC_YEAR%-%RTC_MONTH%-%RTC_DOM% %RTC_DOW% %RTC_HOUR%:%RTC_MINUTE%:%RTC_SECOND%</span></p>
 <p>
 <div style="text-align:center;">
-<a href="/reset"><button>Reset</button></a>
+<a href="/defaults"><button>Set Defaults</button></a>
 </div>
 <p>
-<fieldset><legend>Configuration</legend>
+<fieldset><legend>System Options</legend>
 <form action="/get">
 Google Sheet Update
 <input type="radio" id="gsUpdateOff" name="gsUpdate" onclick="handleClick(this);" value="off" %GS_UPDATE_OFF%><label for="gsUpdateOff">Off</label>
@@ -26,16 +26,16 @@ Google Sheet Update
 <br>
 <div style="display:%DISPLAY_INTERNET%;" id="div_internet">
 <table>
-<tr><td>Google Sheet ID</td><td><input type="text" id="gsID" name=gsID value="%GS_ID%"></td></tr>
-<tr><td>Sheet Name</td><td><input type="text" id="gsSheet" name=gsSheet value="%GS_SHEET%"></td></tr>
+<tr><td>Sheet URL ID</td><td><input type="text" id="gsID" name=gsID value="%GS_ID%"></td></tr>
+<tr><td>Sheet Tab Name</td><td><input type="text" id="gsSheet" name=gsSheet value="%GS_SHEET%"></td></tr>
 <tr><td>Access Point SSID</td><td><input type="text" id="wifiSSID" name=wifiSSID value="%WIFI_SSID%"></td></tr>
 <tr><td>Access Point Password</td><td><input type="password" id="wifiPassword" name=wifiPassword value="%WIFI_PASSWORD%"></td></tr>
 <tr><td>UTC Offset (secs)</td><td><input type="number" id="utcOffset" name=utcOffset value="%UTC_OFFSET%"></td></tr>
 <tr><td>Daylight Offset (secs)</td><td><input type="number" id="daylightOffset" name=daylightOffset value="%DAYLIGHT_OFFSET%"></td></tr>
-<tr><td>Watering Schedule Hour</td><td><input type="number" name="scheduleHour" min="9" max="15" value="%SCHEDULE_HOUR%"></td></tr>
-<tr><td>Watering Schedule Minute</td><td><input type="number" name="scheduleMinute"  min="0" max="59" value="%SCHEDULE_MINUTE%"></td></tr>
+<tr><td>Wake-up Hour</td><td><input type="number" name="scheduleHour" min="9" max="15" value="%SCHEDULE_HOUR%"></td></tr>
+<tr><td>Wake-up Minute</td><td><input type="number" name="scheduleMinute"  min="0" max="59" value="%SCHEDULE_MINUTE%"></td></tr>
 <tr><td>Moisture Sensor Threshold</td><td><input type="number" name="scheduleSensorThreshold" min="350" max="1000" value="%SCHEDULE_SENSOR_THRESHOLD%"></td></tr>
-<tr><td>Pump Time (secs)</td><td><input type="number" name="scheduleOnTimeSeconds"  min="5" max="25" value="%ON_TIME_SECONDS%"></td></tr>
+<tr><td>Pump On-Time (secs)</td><td><input type="number" name="scheduleOnTimeSeconds"  min="5" max="25" value="%ON_TIME_SECONDS%"></td></tr>
 </table>
 </div>
 <p>

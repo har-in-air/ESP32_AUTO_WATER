@@ -10,15 +10,16 @@
 #include "ntp.h"
 
 #define pinBuzzer       13  // piezo buzzer
-#define pinPumpSwitch   26  // controls the pump
-#define pinConfigBtn    0   // wifi configuration
-#define pinSensorPower  25
-#define pinSDA          27
-#define pinSCL          14
+#define pinPumpSwitch   26  // watering pump on/off control
+#define pinConfigBtn    0   // wifi AP server enable
+#define pinSensorPower  25  // moisture sensor power on/off control
+#define pinSDA          27  // I2C interface to DS3231 RTC
+#define pinSCL          14  // "
 
-const char* FirmwareRevision = "1.21";
+const char* FirmwareRevision = "1.30";
 
 void setup() {
+  uint32_t marker = millis();
   pinMode(pinSensorPower, OUTPUT);
   // sensor power on
   digitalWrite(pinSensorPower, HIGH);
@@ -34,14 +35,14 @@ void setup() {
   Serial.println();
   Serial.printf("EspWaterTimer v%s compiled on %s at %s\n\n", FirmwareRevision, __DATE__, __TIME__);
 
-  // load non-volatile data stored in preferences
+  // load non-volatile data stored in Preferences partition
   // google sheet update yes/no, internet access point credentials
   gs_config_load(GSConfig); 
-  // daily scheduled hour/minute, soil moisture threshold, pump on-time
+  // daily scheduled wake-up hour/minute, soil moisture threshold, pump on-time
   schedule_load(Schedule); 
-  // buffer of unsent google sheet data records
+  // buffer of queued google sheet data records
   log_buffer_load(LogBuffer); 
-  Serial.printf("Number unsent records = %d\n", LogBuffer.numEntries);
+  Serial.printf("Number queued (unsent) records = %d\n", LogBuffer.numEntries);
 
   Serial.printf("GS Update required = %s\n", GSConfig.update ? "true" : "false");
 
@@ -61,16 +62,23 @@ void setup() {
     }
   
   Serial.println("\nFor WiFi AP mode, press and hold button (GPIO0) until you hear a long tone");
-  // beep 10 times to allow enough time for pressing GPIO0 button if required
-  beep(pinBuzzer,1000, 100, 100,10); 
-    
-  if (digitalRead(pinConfigBtn) == 0) {
-    // GPIO0 button was pressed
+  int btnConfig;
+  int counter = 5;
+  do {
+    // pulsating beeps for one second. Press GPIO0 button now for  wifi AP web server mode
+    tone_generate(pinBuzzer, 300, 100);
+    tone_generate(pinBuzzer, 600, 100);
+    btnConfig = digitalRead(pinConfigBtn);
+    counter--;
+  } while (btnConfig && counter);
+  
+  if (btnConfig == 0) {
+    // GPIO0 button is pressed
     Serial.println("\n====== Access Point Configuration Mode ======");
     Serial.println("SSID=EspTimer Password=123456789  URL=http://192.168.4.1");
-    // 3 second long 800Hz tone to indicate unit is now in standalone Access Point and 
+    // 3 second 1000Hz beep  to confirm unit is now in standalone Access Point and 
     // web server configuration mode.
-    tone_generate(pinBuzzer, 800, 3000);
+    tone_generate(pinBuzzer, 1000, 3000);
     if(!SPIFFS.begin(true)){
       Serial.println("An Error has occurred while mounting SPIFFS");
       return;
@@ -81,10 +89,9 @@ void setup() {
     Serial.println("\n====== Normal Watering Mode ======");
     GS_DATA_t gsData;
     analogRead(pinADCSensor); // dummy sensor read, throwaway sample
-    delay(50);
-    // get sensor data sample
+    // get averaged sensor reading
     gsData.sensorReading = sensor_reading();
-    // power off sensor, reduces current draw by 6mA
+    // power off sensor (reduces current draw by 6mA)
     digitalWrite(pinSensorPower, LOW);
     // date and time stamp, voltages
     rtc_get_clock(Clock);
@@ -143,7 +150,7 @@ void setup() {
           GS_DATA_t logData;
           log_buffer_dequeue(LogBuffer, logData);
           gs_update(logData);
-          delay(500);
+          delay(250);
           }
         // upload today's data
         gs_update(gsData);
@@ -156,9 +163,9 @@ void setup() {
      log_buffer_store(LogBuffer);
      }
      
-    Serial.println("Entering deep sleep");
+    Serial.printf("Total time taken = %dseconds, entering deep sleep", ((millis() - marker)+500)/1000 );
     Serial.flush();
-    delay(100);    
+    delay(10);    
     // for testing google sheets update, use esp32 wakeup timer for wakeup after 60seconds
     //Serial.println("Set next wakeup time for +1 minute");
     //esp_sleep_enable_timer_wakeup(60 * 1000000ULL);

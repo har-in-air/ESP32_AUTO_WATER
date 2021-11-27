@@ -197,11 +197,11 @@ void wifi_access_point_init() {
     request->send(SPIFFS, "/style.css", "text/css");
   });
 
-  server.on("/reset", HTTP_GET, [] (AsyncWebServerRequest *request) {
+  server.on("/defaults", HTTP_GET, [] (AsyncWebServerRequest *request) {
     gs_config_reset(GSConfig);
     schedule_reset(Schedule);
     log_buffer_reset(LogBuffer);
-    request->send(200, "text/html", "Reset Complete<br><a href=\"/\">Return to Home Page</a>");  
+    request->send(200, "text/html", "Default options set<br><a href=\"/\">Return to Home Page</a>");  
   });
 
   server.on("/get", HTTP_GET, [] (AsyncWebServerRequest *request) {
@@ -247,7 +247,7 @@ void wifi_access_point_init() {
       GSConfig.daylightOffsetSeconds = inputMessage.toInt();
       }
       
-    // Watering Schedule 
+    // wake-up time hour and minute 
     if (request->hasParam("scheduleHour")) {
       inputMessage = request->getParam("scheduleHour")->value();
       bScheduleChange = true; 
@@ -258,18 +258,20 @@ void wifi_access_point_init() {
       bScheduleChange = true; 
       Schedule.minute = (uint32_t)inputMessage.toInt();
       }
+    // moisture sensor dry threshold. if reading > threshold, turn on pump  
     if (request->hasParam("scheduleSensorThreshold")) {
       inputMessage = request->getParam("scheduleSensorThreshold")->value();
       bScheduleChange = true; 
       Schedule.sensorThreshold = (uint32_t)inputMessage.toInt();
       }
+    // Pump on-time  
     if (request->hasParam("scheduleOnTimeSeconds")) {
       inputMessage = request->getParam("scheduleOnTimeSeconds")->value();
       bScheduleChange = true; 
       Schedule.onTimeSeconds = (uint32_t)inputMessage.toInt();
       }    
 
-    // RTC Clock
+    // RTC Clock setting
     ClockSet = Clock;  
     if (request->hasParam("rtcYear")) {
       inputMessage = request->getParam("rtcYear")->value();
@@ -322,7 +324,7 @@ void wifi_access_point_init() {
       bGSConfigChange = false;
       }
     if (bScheduleChange == true) {
-      Serial.printf("Schedule changed, saving schedule and resetting RTC daily alarm\n");
+      Serial.printf("Watering options changed, saving schedule and resetting RTC daily alarm\n");
       schedule_store(Schedule);
       RTC_ALARM alarm;
       alarm.hour = Schedule.hour;
