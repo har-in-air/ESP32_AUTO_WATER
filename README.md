@@ -13,6 +13,8 @@ It then optionally logs the calendar date and time, moisture sensor reading, pow
 If Google Sheet uploading is enabled and the configured Internet Access Point is not available, the data record is appended to a buffer and saved to ESP32 flash memory. If internet access is available, any queued data records are uploaded before the current data record. Up to 30 records (30 days) can be buffered in ESP32 flash. After 30 days, the oldest record will be over-written by the current day's data record.
 
 <img src="docs/autowater_gs_update.png" />
+<br>
+<br>
 
 To configure the watering system, press the reset button for the ESP32 module and then immediately press the configuration button (GPIO0) when you hear a pulsing tone. Keep it pressed until you hear a long confirmation tone, and then release. The system is now configured as a stand-alone WiFi Access Point (AP) with SSID `ESP32Timer` and password `123456789`.
 
@@ -39,52 +41,42 @@ When done with web page configuration changes, press the reset button on the ESP
 
 <img src="docs/ap_config_homepage.png" />
 
+<br>
+<br>
+
 The watering system may not be conveniently located for cable-based programming. So you can also update the firmware via this configuration server page.  After the new firmware binary file is uploaded, the ESP32 will automatically re-start with the updated firmware.
 
 <img src="docs/ap_firmware_update.png" />
 
-# Normal Watering Mode execution log after wake-up
+<br>
+<br>
 
-The sensor was disconnected for this run (reading = 0). 
+# Execution log and current draw
 
-So, when
+<img src="docs/ontime_current_draw.png" />
+
+<br>
+The sensor was disconnected for this run : "Sensor reading  0". 
+
+When
 
 * Google Sheet update is enabled
 * Internet access is available
 * Watering is not required
 * No queued unsent records
 
-the total time taken is ~14 seconds. If watering is required, ~34 seconds assuming the default
-pump on-time of 20 seconds. Note that Google Sheets returns a redirect HTTP code (302) so this is
-the expected value.
+the total time each day not in deep-sleep mode is ~15 seconds. This includes time spent to get local time from an NTP server and check against RTC time.
 
-```
-EspWaterTimer v1.30 compiled on Nov 27 2021 at 12:27:40
+If watering is required, an additional 20 seconds assuming the default pump on-time of 20 seconds. 
 
-Number queued (unsent) records = 0
-GS Update required = true
-Loaded Schedule
-        time = 12:00
-        sensor threshold = 360
-        ton time = 20 secs
-RTC Alarm2 : Daily @ 12:00
+Note that Google Sheets returns a redirect HTTP code (302), so this is the expected value.
 
-For WiFi AP mode, press and hold button (GPIO0) until you hear a long tone
+The current drawn from an 18650 Li-Ion battery was monitored by an external INA219 current sensor
+based meter, gated by a gpio signal from the ESP32 (set to 1 on boot, reset to 0 just before entering deep-sleep). The meter samples the current at 1.14kHz (17664 samples in 15.507seconds). 
 
-====== Normal Watering Mode ======
-Battery Voltage 4.1V
-SuperCap Voltage 14.7V
-Sensor Threshold 360
-Sensor Reading 0
-On Time 0 secs
-Watering not required
-Setting alarm for next day
-Updating google sheet - AutoWater
-Connected, IP Address : 192.168.146.127
-Updated RTC from NTP
-Http Code expect 302, received 302
-Total time taken = 14seconds, entering deep sleep
-```
+The current measurements are consistent : ~47mA average draw, with peaks of 400+mA corresponding to wifi transmission bursts.
+
+Currently, when the ESP32 is in deep-sleep mode, the total system current draw from the Li-ion battery  is ~0.32 mA.
 
 # Build Environment
 * Ubuntu 20.04 LTS amdx64

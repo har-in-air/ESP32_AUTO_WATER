@@ -15,11 +15,14 @@
 #define pinSensorPower  25  // moisture sensor power on/off control
 #define pinSDA          27  // I2C interface to DS3231 RTC
 #define pinSCL          14  // "
+#define pinGate         4   // external current monitor gate signal
 
-const char* FirmwareRevision = "1.30";
-
+const char* FirmwareRevision = "1.40";
+ 
 void setup() {
   uint32_t marker = millis();
+  pinMode(pinGate, OUTPUT);
+  digitalWrite(pinGate, HIGH); // external current monitor - start sampling
   pinMode(pinSensorPower, OUTPUT);
   // sensor power on
   digitalWrite(pinSensorPower, HIGH);
@@ -173,6 +176,7 @@ void setup() {
     // reduce power consumption to minimum before going to sleep. The DS3231 RTC will generate
     // a reset pulse the next day at the scheduled time to wake up the ESP32
     wifi_off();
+    digitalWrite(pinGate, LOW); // external current monitor - stop sampling
     esp_deep_sleep_start();
     }
   }
