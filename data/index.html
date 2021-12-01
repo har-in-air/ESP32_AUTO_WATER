@@ -47,13 +47,13 @@ Google Sheet Update
 <fieldset><legend>RTC Date/Time</legend>
 <form action="/get">
 <table>
-<tr><td>Year [21..99]</td><td><input type="number" name="rtcYear" min="21" max="99"></td></tr>
-<tr><td>Month [1..12]</td><td><input type="number" name="rtcMonth" min="1" max="12"></td></tr>
-<tr><td>Day of Month [1..31]</td><td><input type="number" name="rtcDayOfMonth" min="1" max="31"></td></tr>
-<tr><td>Day of Week [0=Sun..6=Sat]</td><td><input type="number" name="rtcDayOfWeek" min="0" max="6"></td></tr>
-<tr><td>Hour [0..23]</td><td><input type="number" name="rtcHour" min="0" max="23"></td></tr>
-<tr><td>Minute [0..59]</td><td><input type="number" name="rtcMinute" min="0" max="59"></td></tr>
-<tr><td>Second [0..59]</td><td><input type="number" name="rtcSecond" min="0" max="59"></td></tr>
+<tr><td>Year [21..99]</td><td><input type="number" name="rtcYear" min="21" max="99" required="true"></td></tr>
+<tr><td>Month [1..12]</td><td><input type="number" name="rtcMonth" min="1" max="12" required="true"></td></tr>
+<tr><td>Day of Month [1..31]</td><td><input type="number" name="rtcDayOfMonth" min="1" max="31" required="true"></td></tr>
+<tr><td>Day of Week [0=Sun..6=Sat]</td><td><input type="number" name="rtcDayOfWeek" min="0" max="6" required="true"></td></tr>
+<tr><td>Hour [0..23]</td><td><input type="number" name="rtcHour" min="0" max="23" required="true"></td></tr>
+<tr><td>Minute [0..59]</td><td><input type="number" name="rtcMinute" min="0" max="59" required="true"></td></tr>
+<tr><td>Second [0..59]</td><td><input type="number" name="rtcSecond" min="0" max="59" required="true"></td></tr>
 </table>  
 <p>
 <input type="submit" value="Submit">
