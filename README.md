@@ -76,7 +76,7 @@ based meter, gated by a gpio signal from the ESP32 (set to 1 on boot, reset to 0
 
 The current measurements are consistent : ~47mA average draw, with peaks of 400+mA corresponding to wifi transmission bursts.
 
-Currently, when the ESP32 is in deep-sleep mode, the total system current draw from the Li-ion battery  is ~0.32 mA.
+When the ESP32 is in deep-sleep mode, my INA219 sensor measures the current draw from the Li-ion battery as ~110uA. This is accounted for by the DS3231 RTC, ESP32 module deep-sleep current, HT7333 quiescent current, and remaining resistive current paths - 500k potentiometer measuring battery voltage, capacitor leakage currents etc.
 
 # Build Environment
 * Ubuntu 20.04 LTS amdx64

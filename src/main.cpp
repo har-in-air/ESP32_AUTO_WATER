@@ -1,6 +1,7 @@
 #include <Arduino.h>
 #include <Wire.h>  
 #include <SPIFFS.h>
+#include <driver/adc.h>
 #include "rtc.h"
 #include "nvdata.h"
 #include "sensor.h"
@@ -17,7 +18,7 @@
 #define pinSCL          14  // "
 #define pinGate         4   // external current monitor gate signal
 
-const char* FirmwareRevision = "1.40";
+const char* FirmwareRevision = "1.50";
  
 void setup() {
   uint32_t marker = millis();
@@ -177,6 +178,7 @@ void setup() {
     // a reset pulse the next day at the scheduled time to wake up the ESP32
     wifi_off();
     digitalWrite(pinGate, LOW); // external current monitor - stop sampling
+    adc_power_off();
     esp_deep_sleep_start();
     }
   }

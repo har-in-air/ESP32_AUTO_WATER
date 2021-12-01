@@ -151,14 +151,14 @@ static String server_string_processor(const String& var){
 
 
 void wifi_off() {
-  WiFi.mode(WIFI_OFF);
+  WiFi.mode(WIFI_MODE_NULL);
   esp_wifi_stop();
   delay(100);
   }
 
 
 void wifi_access_point_init() {
-  esp_wifi_start();
+  esp_wifi_start(); // necessary if esp_wifi_stop() was called before deep_sleep
   delay(100);
 #ifdef STATION  
   WiFi.mode(WIFI_STA);
