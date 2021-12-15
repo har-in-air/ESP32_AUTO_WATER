@@ -22,7 +22,13 @@ bool gs_init() {
   delay(100);
   WiFi.mode(WIFI_STA);
   WiFi.begin(GSConfig.wifiSSID.c_str(), GSConfig.wifiPassword.c_str());
-  if (WiFi.waitForConnectResult() != WL_CONNECTED) {
+  
+  // note : if the Access Point is not running, the timeout happens quickly. 
+  // This timeout appears to be for issues with connecting to a running AP,
+  // e.g. wrong password.
+  // In this situation, not only is the default timeout very long (60s),
+  // the average current drawn nearly doubles. So we reduce the timeout to 8s.
+  if (WiFi.waitForConnectResult(8000UL) != WL_CONNECTED) {
     Serial.println("Connection to Internet AP failed!");
     return false;
     }
