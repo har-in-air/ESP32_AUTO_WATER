@@ -143,12 +143,12 @@ The supercapacitor power bank (max voltage < 19V) provides the DC power supply f
 
 ## Minimizing circuit current drain
 
-The goal is to use a primary battery or a rechargeable battery with low self-discharge without needing to replace the battery or recharge it for a few months at least. E.g. 4 alkaline 1.5V AA batteries in series. Or 4 Eneloop 1.25V rechargeable batteries in series (they have very low self-discharge rates).
+The eventual goal is to use a primary battery or a rechargeable battery with low self-discharge without needing to replace the battery or recharge it for a few months at least. 
 
 I used a Holtek HT7333 3.3V regulator because it draws very little quiescent current (~4uA) and has
-a low dropout voltage of 100mV.<br>
+a low dropout voltage of 100mV-150mV.
 
-The ESP32 is clocked at the minimum clock frequency (80MHz) that gives us WiFi capability.
+The ESP32 is clocked at the minimum clock frequency that gives us WiFi capability (80MHz).
 
 The capacitive moisture sensor draws ~6mA but is switched off after the reading is taken. 
 
@@ -156,12 +156,24 @@ In deep-sleep mode, the circuits drawing current are :
     * ESP32 deep-sleep current (typical 10uA)
     * HT7333 regulator quiescent current (typical 4uA)
     * The resistor drop providing the sensed battery voltage to the ESP32 ADC. I used a 500K potentiometer to minimize the current draw, with a 100nF capacitor on the ADC pin to minimize noise due to the high source impedance.
-    * DS3231 RTC 
+    * DS3231 RTC (already minimized current drain by using VBAT as power supply with VCC pin unconnected - see above)
 
 We can estimate battery capacity drain over the course of a day : 
-1. ~50mA x ~20 seconds for active time = 50mA x (20/3600)Hr = 0.28mAHr
-2. ~20uA x ~24 hours in deep-sleep mode = 0.02mA x 24Hr = 0.48mAHr
-So the total capacity drain in 24 hours = 0.28 + 0.48 = 0.76mAHr
+1. Active mode : ~50mA x ~20 seconds = 50mA x (20/3600)Hr = 0.28mAHr
+2. Deep-sleep mode : ~20uA x ~24 hours = 0.02mA x 24Hr = 0.48mAHr
+So the total capacity drain in 24 hours = 0.76mAHr
+
+We could use this to estimate the number of days we can run with a fully charged battery or fresh primary batteries. E.g. with
+a 500mAHr battery, that would give us 500/0.76 = 641 days. Impressive, but we can't use all of the available battery capacity for two reasons :
+1. VCC is 3.3V and the LDO regulator has a minimum drop-out voltage of 100-150mV.
+2. As the battery discharges, the internal resistance increases. The ESP32 may only draw 50mA on average, but the peak current requirements are ~500mA in short bursts. There is an IR drop across the internal series resistance, when R increases, this causes brown-out conditions on WiFi transmission bursts, and the ESP32 resets.
+
+I am currently experimenting with a tiny 200mAHr LiPoly battery. To compensate for the increased internal resistance on discharge, I soldered a 1500uF 6.3V solid polymer capacitor directly across the battery terminals (before the overcharge/overdischarge protection circuit board that comes with the battery). 
+
+I tried to measure the self-discharge leakage current of the capacitor by charging it with a battery. When it had fully charged, the residual current was below the resolution of my meter, so below 10uA for sure. And with the capacitor in parallel, I'm still measuring the total circuit current drawn in deep-sleep mode at ~20uA.
+
+Even assuming just 100mAHr capacity, that gives us 100/0.78 = 128 days! Hard to believe. Let's see if the capacitor in parallel will act as a low ESR storage bank for the high current pulses, and prevent ESP32 brown-outs when the battery has discharged 50% to 3.6V ...
+
 
 # Credits
 * [Updating Google Sheet via HTTPS](https://stackoverflow.com/questions/69685813/problem-esp32-send-data-to-google-sheet-through-google-app-script)
