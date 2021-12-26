@@ -4,95 +4,90 @@ An ESP32-C3 module together with a capacitive soil moisture sensor and DS3231 Re
 
 Power for the pump comes from a bank of super-capacitors charged by a solar panel. 
 
-Power for the electronics comes from a LiPoly battery (or 4 x 1.5V AA cells).
+Power for the electronics comes from a Li-Poly battery (or 4 x 1.5V AA cells).
 
 The system is self-contained. No mains power supply or connection to a water faucet is required.
 
-In normal watering mode, the ESP32-C3 is woken up from deep-sleep once a day at a scheduled time by the DS3231 RTC. It checks the soil moisture level and if required, turns on the water pump. 
+In normal watering mode, the ESP32-C3 is woken up from deep-sleep once a day at a scheduled time by the DS3231 RTC. It checks the soil moisture level and if required, turns on the water pump for a fixed duration (e.g. 20 seconds). 
 
-It then optionally logs the calendar date and time, moisture sensor reading, power supply voltages, watering duration, RTC clock drift (compared to NTP time) as a row of entries in a Google Docs spreadsheet document. 
+It then (optionally) logs the calendar date and time, moisture sensor reading, power supply voltages, watering duration, RTC clock drift (compared to Network time) as a row of entries in a Google Docs spreadsheet document. 
 
-If the Google Sheet upload option is enabled and the configured Internet Access Point is not available, this data set is queued to a buffer in ESP32-C3 flash memory. 
+If the data upload option is enabled and internet access is not available, this data record is queued to a buffer in ESP32-C3 flash memory. 
 
-If internet access is available, any queued records in flash are removed from the queue and uploaded to the spreadsheet, before the current day's data record. 
+If data upload is enabled and internet access is available, any queued records in flash are removed from the queue and uploaded to the spreadsheet, before the current days data record. 
 
-Up to 30 data records can be queued in ESP32 flash. After 30 days, the oldest queued record will be over-written by the current day's data record.
+Up to 30 data records can be queued in ESP32 flash. After 30 days, the oldest queued record will be over-written by the new data record.
 
 <img src="docs/autowater_gs_update.png" />
 <br>
 <br>
 
 ## Configuration
-To configure the watering system, press the reset button for the ESP32-C3 module and then immediately press the configuration button (GPIO9) when you hear a pulsing tone. Keep it pressed until you hear a long confirmation tone, and then release. The system is now configured as a stand-alone WiFi Access Point (AP) with SSID `ESPC3WaterTimer` and password `123456789`.
+To configure the watering system, press the reset button for the ESP32-C3 module and then immediately press the configuration button (GPIO9) when you hear a pulsing tone. Keep it pressed until you hear a long confirmation tone, and then release. The system is now configured as a stand-alone WiFi Access Point with SSID `ESPC3WaterTimer` and password `123456789`.
 
-A web server running on this AP at `url : http://192.168.4.1` can then be used to configure the following :
+A web server running on this Access Point at the url `http://192.168.4.1` can then be used to configure the following :
 * System Options
-  * Enable / disable data uploads to the Google Docs spreadsheet
+  * Enable / disable data uploads to the Google Sheet
   * Google Sheet URL ID
   * Google Sheet Tab name
   * Internet Access Point SSID 
   * Internet Access Point password
-  * Local Time Zone UTC offset
-  * Local Daylight Savings offset
+  * Local Time Zone UTC offset in minutes
+  * Local Daylight Savings offset in minutes
   * Daily wake-up time
   * Soil moisture threshold for watering
-  * Pump on-time
+  * Pump on-time in seconds
 * Real-Time Clock
   * Date
   * Time
 
-Note that the RTC configuration is useful for initial setting. If Google Sheet update is enabled and
-internet access is available, the system will get the local time from a Network Time Protocol (NTP) server 
-and correct the RTC if required.  The error in seconds (NTP time minus RTC time) is also logged to the spreadsheet.
+If data upload is enabled and internet access is available, the system will get the local time from a Network Time Protocol (NTP) server and correct the RTC if required. So if you disconnect and reconnect the battery, you don't have to configure the RTC calendar/time, it will be done automatically. The error in seconds (NTP time minus RTC time) is also logged to the spreadsheet.
 
-Click on the `Submit` button after making changes to the options.
+If data upload is disabled, the system will not attempt to connect to the Internet.Manual RTC calendar/time configuration via the web server page is then required.
 
-When you are done with configuration, press the hardware reset button on the ESP32 module. The system will now be
-in normal watering mode.
+Click on the `Submit` button after making changes to the configuration options or RTC settings.
+
+When you are done with configuration, press the hardware reset button on the ESP32-C3 module. The system will reboot in normal watering mode.
 
 <img src="docs/ap_config_homepage.png" />
 <br>
 <br>
 
 ## OTA Firmware Updates
-You can update the firmware via this configuration server. Enter the url `http://192.168.4.1/update`. Choose the
-new firmware binary file.  After the file is uploaded, the ESP32-C3 module will automatically re-start with the updated firmware. Check the new firmware revison string in the configuration server home page (assuming the revision string has been updated along with code changes).
+You can update the firmware via the WiFi server webpage url `http://192.168.4.1/update`. Choose the new firmware binary file.  After the file is uploaded, the ESP32-C3 module will automatically re-boot with the updated firmware. Check the new firmware revison string in the configuration server home page (assuming the revision string has been updated along with code changes).
 
 <img src="docs/ap_firmware_update.png" />
 <br>
 <br>
 
-# Execution log and current draw
+# Execution Log and Current Drain in Active Mode
 
 <img src="docs/ontime_current_draw.png" />
 
-<br>
 The sensor was disconnected for this run. 
 
-When
+Note that Google Sheets returns a redirect HTTP code (302), so this is the expected value.
 
+When
 * Google Sheet update is enabled
 * Internet access is available
 * Watering is not required
 * No queued unsent records
 
-the total time each day not in deep-sleep mode is < 15 seconds. This includes time spent to get local time from an NTP server and check against RTC time.
+the total time each day in active mode (i.e. not in deep-sleep) is < 15 seconds. This includes time spent to get local time from an NTP server and correct the RTC.
 
 If watering is required, an additional 20 seconds assuming the default pump on-time of 20 seconds. 
 
-Note that Google Sheets returns a redirect HTTP code (302), so this is the expected value.
+The current drawn from a Li-Ion battery was monitored by an external INA219 current meter, gated by a gpio signal (pin 18) from the ESP32. This gpio pin is set to 1 on entering `setup()` and reset to 0 just before entering deep-sleep. The meter samples the current at ~1.1kHz while the gate pin is high. 
 
-The current drawn from a Li-Ion battery was monitored by an external INA219 current meter, gated by a gpio signal (pin 18) from the ESP32. This gpio pin is set to 1 on boot and reset to 0 just before entering deep-sleep. The meter samples the current at ~1.1kHz while the gate is high. 
-
-The average circuit current drain from the battery from entering `setup()` to entering deep-sleep mode is ~46mA, with peaks of ~300mA (during wifi transmission bursts). 
+The current meter serial monitor shows that the average circuit current drain from the battery in active mode (9.875 seconds total) is ~46mA, with peaks of ~300mA (during wifi transmission bursts). 
 
 In deep-sleep mode, the total circuit current drain is ~15uA. 
 
-
 # Build Environment
 * Ubuntu 20.04 LTS AMDx64
-* Visual Studio Code with PlatformIO plugin using Arduino framework targeting `esp32dev` board. The file `platformio.ini` specifies the framework packages and toolchain required by the ESP32-C3 module, and libraries used by the project.
-* Custom `partition.csv` file with two 1.9MB code partitions supporting OTA firmware update
+* Visual Studio Code with PlatformIO plugin using Arduino framework targeting `esp32dev` board. The file `platformio.ini` specifies the framework packages and toolchain required for the ESP32-C3, and the libraries used by the project. ESP32-C3 Arduino framework support is new and not as solid as for the ESP32. A minor type-cast compile error for the AsyncTCP library had to be fixed by editing the local version of the library source code in the project `.pio` subdirectory.
+* Custom `partition.csv` file with two 1.9MB code partitions supporting OTA firmware updates
 * ~160kByte LittleFS partition for hosting HTML web server pages
 
 # Hardware 
@@ -101,14 +96,13 @@ In deep-sleep mode, the total circuit current drain is ~15uA.
 ## Power supplies
 
 * 20V Solar Panel<br>
-It may not be sunny enough to run the pump directly off the solar panel when the ESP32-C3 wakes up at the scheduled time.
-So the solar panel is used to charge up a bank of super-capacitors connected in series. 
-This bank is used to power the 12V water pump.
+It may not be sunny enough to run the water pump directly off the solar panel when the ESP32-C3 wakes up at the scheduled time.
+The solar panel is used to charge up a bank of super-capacitors. This capacitor bank is used to power the 12V water pump.
 
 * Super-capacitor bank<br>
 I used eight 10F 2.7V super-capacitors in series to provide an energy storage bank to power the 12V water pump.<br>
 Even on a moderately cloudy day, the capacitor bank charges up to ~18V.<br>
-I used a series 1N4007 diode from the solar panel so that the capacitor bank does not discharge back through the panel. Once charged to 17V+, the super-capacitor bank can run the 12V water pump for at least 30 seconds.
+A series 1N4007 diode from the solar panel ensures that the capacitor bank does not discharge back through the panel when it's cloudy or dark. Once charged to 17V+, the super-capacitor bank can run the 12V water pump for at least 30 seconds.
 
 * Li-ion Battery<br>
 This is used to provide circuit power via an HT7333 LDO 3.3V regulator.<br>
@@ -119,20 +113,20 @@ This provides a daily alarm at the scheduled time to wake up the ESP32-C3 from d
 ### Minimizing DS3231 Current Drain
 
 #### Option 1
-The DS3231 VCC pin is connected to the 3.3V circuit supply, and an external CR2032 coin cell is connected to the VBAT pin providing backup. The RTC drains < 100uA as per the datasheet. I measured ~110uA total circuit current drain in deep-sleep mode. The bulk of the deep-sleep circuit current drain is from the RTC.
+The DS3231 VCC pin is connected to the 3.3V circuit supply, and an external CR2032 coin cell connected to the VBAT pin provides backup when you disconnect the system battery. The RTC drains < 100uA as per the datasheet. I measured ~110uA total circuit current drain in deep-sleep mode. The bulk of the deep-sleep circuit current drain is from the RTC.
     
 #### Option 2
 The DS3231 datsheet gives us a useful option : leave the DS3231 VCC pin un-connected and power the VBAT pin with the circuit 3.3V supply. The RTC SCL, SDA and INT_ pins are now pulled up via resistors to the VBAT pin. In this case, the RTC time-keeping operation works as before but with much less current drain. I measured ~15uA total circuit drain in deep-sleep mode. 
     
-There are a couple of caveats with this option : 
-1. It takes a couple of seconds for the oscillator to start up the first time power is applied to VBAT
+There are a couple of caveats : 
+1. It takes a couple of seconds for the oscillator to start up the first time power is applied to VBAT.
 2. If you disconnect the battery, there is no backup so the RTC loses all date/time information. This is not an issue if Google Sheet updates are enabled. When the ESP32-C3 connects to the internet, it updates the RTC with date & time from an Network Time Protocol (NTP) server.<br> 
-If Google Sheet updates are disabled, we can manually set the RTC date/time via the WiFi configuration web page. 
+If Google Sheet updates are disabled, manually set the RTC date/time via the WiFi configuration web page. 
 
 ### ESP32-C3 Wake-up Reset Pulse
 A 4.7uF capacitor in series between the DS3231 INT_ output pin and the ESP32-C3 EN pin generates a reset pulse for the ESP32-C3 at the daily scheduled time.
 
-For the ESP32-C3 EN pin, I used a 2K2 resistor pullup to VCC and a 1uF ceramic cap to ground. 
+For the ESP32-C3 EN pin, I used a 2.2K resistor pullup to VCC and a 1uF ceramic cap to ground. 
 
 ## Capacitive Soil Moisture Sensor
 <img src="docs/capacitive_sensor.png" />
@@ -145,13 +139,13 @@ It is possible for the top soil layer to dry out while the roots are still in da
 
 A 1-meter shielded cable provides ground, power supply and analog sensor output interface. The analog sensor output voltage increases as the soil gets drier.
 
-This particular sensor module has a current draw of ~6mA.  It has an on-board voltage regulator and is powered from the battery via a mosfet power switch circuit  controlled by an ESP32-C3 GPIO pin. After reading the sensor, the sensor power supply is switched off. This is necessary to minimize total circuit current draw during ESP32-C3 deep-sleep mode.
+This particular sensor module has a current draw of ~6mA.  It has an on-board voltage regulator and is powered from the battery via an nmos-pmos switch controlled by an ESP32-C3 GPIO pin. After reading the sensor, the sensor power supply is switched off. This is necessary to minimize total circuit current draw during ESP32-C3 deep-sleep mode.
 
-## Power Mosfet Switch Module
+## Power Mosfet Switch Module for Water Pump
 
 <img src="docs/mosfet_control_module.png" />
 
-I used this switch module to control the water pump. The PWM input is connected to an ESP32-C3 GPIO pin for simple on-off control. 
+I used this module to control the water pump. The PWM input is connected to an ESP32-C3 GPIO pin for simple on-off control. 
 
 <img src="docs/LR7843-MOSFET-Control-Module-Schematic.jpg" />
 
@@ -159,17 +153,18 @@ The super-capacitor power bank provides the DC power supply for the water pump.
 
 I used an FR303 diode as flyback protection for the inductive pump motor load.
 
+A ferrite bead isolates the high current spikes in the water pump circuit ground from the electronics ground. Actually the solar panel + capacitor bank + water pump circuit could have been completely isolated from the control electronics if we were not interested in monitoring the super-capacitor bank voltage via the ESP32-C3 ADC (this requires a common ground).
+
 
 ## Minimizing Circuit Current Drain
 
 The eventual project goal is to use a primary battery (or a rechargeable battery with low self-discharge rate), without needing to replace or recharge it for a few months at least. 
 
-I used a Holtek HT7333 voltage regulator because it draws very little quiescent current (~4uA) and has
-a low dropout voltage of 100mV-150mV.
+I used a Holtek HT7333 voltage regulator because it draws very little quiescent current (~4uA) and has a low dropout voltage of 100mV-150mV.
 
 The ESP32-C3 is clocked at the minimum clock frequency that gives us WiFi capability (80MHz).
 
-The capacitive moisture sensor draws ~6mA but the power supply to the sensor is switched off after the reading is taken. 
+The moisture sensor module draws ~6mA but the power supply to the sensor is switched off after the reading is taken. 
 
 The ADC resistor drop for measuring battery voltage is taken from the switched power supply for the moisture sensor, so there is no resistive drain path in deep-sleep mode.
 
@@ -188,7 +183,7 @@ We could use this to estimate the number of days we can run with a fully charged
 
 E.g. A 500mAHr Li-poly battery gives us 500/0.64 = 781 days. Impressive, but we can't use the full battery capacity for two reasons :
 1. VCC is 3.3V and the LDO regulator has a minimum drop-out voltage of 100-150mV. So realistically we should only allow for a discharge to 3.5V from the fully charged 4.2V.
-2. As the battery discharges, its internal series resistance increases. There is an IxR drop across the battery internal series resistance. The ESP32-C3 peak current requirements are ~300mA during wifi transmission bursts. If the internal series resistance is high, the additional IR drop will cause a brown-out reset.
+2. As the battery discharges, its internal series resistance increases. There is an I.R drop across the battery internal series resistance. The ESP32-C3 peak current requirements are ~300mA during wifi transmission bursts. If the internal series resistance is high, the additional I.R drop will cause a brown-out reset.
 
 <b>I am currently experimenting with a tiny 200mAHr Li-Poly battery. </b>
 
