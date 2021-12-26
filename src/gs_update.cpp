@@ -1,14 +1,14 @@
 #include <WiFi.h>
 #include <HTTPClient.h>
 #include <esp_wifi.h>
-#include "nvdata.h"
+#include "nv_data.h"
 #include "gs_update.h"
 
 static String SzMonth[12]= {"Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"};
 
-#define USE_HTTP
+//#define USE_HTTPS
 
-#ifndef USE_HTTP
+#ifdef USE_HTTPS
 #include <WiFiClientSecure.h>
 
 WiFiClientSecure client;
@@ -18,64 +18,66 @@ static const int HttpsPort = 443;
 #endif
 
 bool gs_init() {
-  esp_wifi_start();
-  delay(100);
-  WiFi.mode(WIFI_STA);
-  WiFi.begin(GSConfig.wifiSSID.c_str(), GSConfig.wifiPassword.c_str());
-  
-  // note : if the Access Point is not running, the timeout happens quickly. 
-  // This timeout appears to be for issues with connecting to a running AP,
-  // e.g. wrong password.
-  // In this situation, not only is the default timeout very long (60s),
-  // the average current drawn nearly doubles. So we reduce the timeout to 8s.
-  if (WiFi.waitForConnectResult(8000UL) != WL_CONNECTED) {
-    Serial.println("Connection to Internet AP failed!");
-    return false;
-    }
-  Serial.print("Connected, IP Address : ");
-  Serial.println(WiFi.localIP());
-#ifndef USE_HTTP 
-  client.setInsecure();
-#endif
-  return true;
-  }
+	esp_wifi_start();
+	delay(100);
+	WiFi.mode(WIFI_STA);
+	WiFi.begin(GSConfig.wifiSSID.c_str(), GSConfig.wifiPassword.c_str());
 
-#ifndef USE_HTTP
+	// note : if the Access Point is not running, the timeout happens quickly. 
+	// This timeout appears to be for issues with connecting to a running AP,
+	// e.g. wrong password.
+	// In this situation, not only is the default timeout very long (60s),
+	// the average current drawn nearly doubles. So we reduce the timeout to 8s.
+	if (WiFi.waitForConnectResult(8000UL) != WL_CONNECTED) {
+		Serial.println("Connection to Internet AP failed!");
+		return false;
+		}
+	Serial.print("Connected, IP Address : ");
+	Serial.println(WiFi.localIP());
+#ifdef USE_HTTPS 
+	client.setInsecure();
+#endif
+	return true;
+	}
+
+
+#ifdef USE_HTTPS
+
 bool gs_update(GS_DATA_t &data) {
-  Serial.printf("connecting to %s\n", SzGSHost);
-  if (!client.connect(SzGSHost, HttpsPort)) {
-    Serial.println("connection failed");
-    return false;
-    }
-  String url = "/macros/s/" + GSConfig.gsID + "/exec?";
-  url += "id=" + GSConfig.gsSheet;
-  url += "&Date=" + SzMonth[data.month-1] + String(data.day);
-  url += "&Time="  + String(data.hour) + ":" + String(data.minute);
-  url += "&SensorReading=" + String(data.sensorReading);
-  url += "&SensorThreshold=" + String(data.sensorThreshold);
-  url += "&OnTimeSeconds=" + String(data.onTimeSeconds);
-  url += "&BatteryVoltage=" + String(data.batteryVoltage, 1);
-  url += "&SuperCapVoltage=" + String(data.superCapVoltage, 1);
-  url += "&NTPminusRTC=" + (data.rtcError == RTC_ERROR_NOT_CALC ? "N.A." : String(data.rtcError));
-  Serial.print("requesting URL: "); Serial.println(url);
-  client.print(String("GET ") + url + " HTTP/1.1\r\n" +
-    "Host: " + SzGSHost + "\r\n" +
-    "User-Agent: ESP32\r\n" +
-    "Connection: close\r\n\r\n");
-  Serial.println("request sent");
-  // Wait Echo
-  while (client.connected()) {
-    String line = client.readStringUntil('\n');
-    if (line == "\r") {
-      Serial.println("headers received");
-      break;
-      }
-    }
-  String line = client.readStringUntil('\n');
-  Serial.print("reply was : ");
-  Serial.println(line);
-  return true;
-  }
+	Serial.printf("connecting to %s\n", SzGSHost);
+	if (!client.connect(SzGSHost, HttpsPort)) {
+		Serial.println("connection failed");
+		return false;
+		}
+	String url = "/macros/s/" + GSConfig.gsID + "/exec?";
+	url += "id=" + GSConfig.gsSheet;
+	url += "&Date=" + SzMonth[data.month-1] + String(data.day);
+	url += "&Time="  + String(data.hour) + ":" + String(data.minute);
+	url += "&SensorReading=" + String(data.sensorReading);
+	url += "&SensorThreshold=" + String(data.sensorThreshold);
+	url += "&OnTimeSeconds=" + String(data.onTimeSeconds);
+	url += "&BatteryVoltage=" + String(data.batteryVoltage, 1);
+	url += "&SuperCapVoltage=" + String(data.superCapVoltage, 1);
+	url += "&NTPminusRTC=" + (data.rtcError == RTC_ERROR_NOT_CALC ? "N.A." : String(data.rtcError));
+	Serial.print("requesting URL: "); Serial.println(url);
+	client.print(String("GET ") + url + " HTTP/1.1\r\n" +
+	"Host: " + SzGSHost + "\r\n" +
+	"User-Agent: ESP32\r\n" +
+	"Connection: close\r\n\r\n");
+	Serial.println("request sent");
+	// Wait Echo
+	while (client.connected()) {
+		String line = client.readStringUntil('\n');
+		if (line == "\r") {
+			Serial.println("headers received");
+			break;
+			}
+		}
+	String line = client.readStringUntil('\n');
+	Serial.print("reply was : ");
+	Serial.println(line);
+	return true;
+	}
 
 #else
 
@@ -122,30 +124,30 @@ const char* root_ca= \
 
 
 bool gs_update(GS_DATA_t &data) {
-  if (WiFi.status() != WL_CONNECTED) return false;
-  HTTPClient http;
-  String url = "https://script.google.com/macros/s/" + GSConfig.gsID + "/exec?";
-  url += "id=" + GSConfig.gsSheet;
-  url += "&Date=" + SzMonth[data.month-1] + String(data.day);
-  url += "&Time="  + String(data.hour) + ":" + (data.minute < 10 ? "0" + String(data.minute) : String(data.minute));
-  url += "&SensorReading=" + String(data.sensorReading);
-  url += "&SensorThreshold=" + String(data.sensorThreshold);
-  url += "&OnTimeSeconds=" + String(data.onTimeSeconds);
-  url += "&BatteryVoltage=" + String(data.batteryVoltage, 1);
-  url += "&SuperCapVoltage=" + String(data.superCapVoltage, 1);
-  url += "&NTPminusRTC=" + (data.rtcError == RTC_ERROR_NOT_CALC ? "N.A." : String(data.rtcError));
-  http.begin(url, root_ca); 
-  int httpCode = http.GET();
-  http.end();
-  if (httpCode > 0) { 
-    Serial.print("Http Code expect 302, received ");Serial.println(httpCode);
-    // redirect code 302 is the expected result
-    return httpCode == 302 ? true : false;
-    } 
-  else {
-    Serial.println("Error on HTTP request");
-    return false;
-    }
-  }
+	if (WiFi.status() != WL_CONNECTED) return false;
+	HTTPClient http;
+	String url = "https://script.google.com/macros/s/" + GSConfig.gsID + "/exec?";
+	url += "id=" + GSConfig.gsSheet;
+	url += "&Date=" + SzMonth[data.month-1] + String(data.day);
+	url += "&Time="  + String(data.hour) + ":" + (data.minute < 10 ? "0" + String(data.minute) : String(data.minute));
+	url += "&SensorReading=" + String(data.sensorReading);
+	url += "&SensorThreshold=" + String(data.sensorThreshold);
+	url += "&OnTimeSeconds=" + String(data.onTimeSeconds);
+	url += "&BatteryVoltage=" + String(data.batteryVoltage, 1);
+	url += "&SuperCapVoltage=" + String(data.superCapVoltage, 1);
+	url += "&NTPminusRTC=" + (data.rtcError == RTC_ERROR_NOT_CALC ? "N.A." : String(data.rtcError));
+	http.begin(url, root_ca); 
+	int httpCode = http.GET();
+	http.end();
+	if (httpCode > 0) { 
+		Serial.print("Http Code expect 302, received ");Serial.println(httpCode);
+		// redirect code 302 is the expected result
+		return httpCode == 302 ? true : false;
+		} 
+	else {
+		Serial.println("Error on HTTP request");
+		return false;
+		}
+	}
     
 #endif

@@ -114,6 +114,23 @@ footer {
 	border-radius:0.375em;
 	font-size:60%;
 	}
+
+input[type="number"] {
+    clear: both;
+    float: right;
+    width: 100px;
+    }
+
+.form-submit-button {
+    margin-bottom:1rem;
+    border-radius:0.5em;
+    padding:0.3em 0.3em;
+    background:#0066A2;
+    align-self:center;	
+    color:white;
+    width:25%;
+    font-size:100%;
+    }
 	
 button {
 	margin-bottom:1rem;

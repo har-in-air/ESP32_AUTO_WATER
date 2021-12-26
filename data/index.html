@@ -1,37 +1,45 @@
 <!DOCTYPE HTML>
 <html>
+
 <head>
-<title>ESP32 Water Timer</title>
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<meta charset="UTF-8">
-<link rel="stylesheet" type="text/css" href="style.css">
+	<title>ESPC3 Water Timer</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta charset="UTF-8">
+	<link rel="stylesheet" type="text/css" href="style.css">
 </head>
+
 <body>
-<h1>ESP32 Water Timer</h1>
+
+<h1>ESPC3 Water Timer</h1>
 <p><span>Firmware Revision : </span><span id="firmwareRevision">%FIRMWARE_REVISION%</span></p>
 <p><span>Sensor Reading : </span><span id="sensorReading">%SENSOR_READING%</span></p>
 <p><span>Battery Voltage : </span><span id="batteryVoltage">%BATTERY_VOLTAGE%v</span></p>
 <p><span>SuperCap Voltage : </span><span id="superCapVoltage">%SUPERCAP_VOLTAGE%v</span></p>
 <p><span>Date and Time : </span><span id="dateTime">%RTC_YEAR%-%RTC_MONTH%-%RTC_DOM% %RTC_DOW% %RTC_HOUR%:%RTC_MINUTE%:%RTC_SECOND%</span></p>
 <p>
+
 <div style="text-align:center;">
 <a href="/defaults"><button>Set Defaults</button></a>
 </div>
 <p>
+
 <fieldset><legend>System Options</legend>
 <form action="/get">
 Google Sheet Update
-<input type="radio" id="gsUpdateOff" name="gsUpdate" onclick="handleClick(this);" value="off" %GS_UPDATE_OFF%><label for="gsUpdateOff">Off</label>
-<input type="radio" id="gsUpdateOn"  name="gsUpdate"  onclick="handleClick(this);" value="on" %GS_UPDATE_ON%><label for="gsUpdateOn">On</label>
+<input type="radio" id="gsUpdateOff" name="gsUpdate" value="off" %GS_UPDATE_OFF%><label for="gsUpdateOff">Off</label>
+<input type="radio" id="gsUpdateOn"  name="gsUpdate" value="on" %GS_UPDATE_ON%><label for="gsUpdateOn">On</label>
 <br>
 <div style="display:%DISPLAY_INTERNET%;" id="div_internet">
 <table>
 <tr><td>Sheet URL ID</td><td><input type="text" id="gsID" name=gsID value="%GS_ID%"></td></tr>
 <tr><td>Sheet Tab Name</td><td><input type="text" id="gsSheet" name=gsSheet value="%GS_SHEET%"></td></tr>
+<td><hr></td>
 <tr><td>Access Point SSID</td><td><input type="text" id="wifiSSID" name=wifiSSID value="%WIFI_SSID%"></td></tr>
 <tr><td>Access Point Password</td><td><input type="password" id="wifiPassword" name=wifiPassword value="%WIFI_PASSWORD%"></td></tr>
-<tr><td>UTC Offset (secs)</td><td><input type="number" id="utcOffset" name=utcOffset value="%UTC_OFFSET%"></td></tr>
-<tr><td>Daylight Offset (secs)</td><td><input type="number" id="daylightOffset" name=daylightOffset value="%DAYLIGHT_OFFSET%"></td></tr>
+<td><hr></td>
+<tr><td>UTC Offset (mins)</td><td><input type="number" id="utcOffset" name=utcOffset value="%UTC_OFFSET%"></td></tr>
+<tr><td>Daylight Offset (mins)</td><td><input type="number" id="daylightOffset" name=daylightOffset value="%DAYLIGHT_OFFSET%"></td></tr>
+<td><hr></td>
 <tr><td>Wake-up Hour</td><td><input type="number" name="scheduleHour" min="9" max="15" value="%SCHEDULE_HOUR%"></td></tr>
 <tr><td>Wake-up Minute</td><td><input type="number" name="scheduleMinute"  min="0" max="59" value="%SCHEDULE_MINUTE%"></td></tr>
 <tr><td>Moisture Sensor Threshold</td><td><input type="number" name="scheduleSensorThreshold" min="350" max="1000" value="%SCHEDULE_SENSOR_THRESHOLD%"></td></tr>
@@ -39,10 +47,15 @@ Google Sheet Update
 </table>
 </div>
 <p>
-<input type="submit" value="Submit">
+
+<div style="text-align:center;">
+<input type="submit" value="Submit" class="form-submit-button">
+</div>
+
 </p>
 </form>
 </fieldset>
+
 <div id="div_rtc">
 <fieldset><legend>RTC Date/Time</legend>
 <form action="/get">
@@ -56,82 +69,16 @@ Google Sheet Update
 <tr><td>Second [0..59]</td><td><input type="number" name="rtcSecond" min="0" max="59" required="true"></td></tr>
 </table>  
 <p>
-<input type="submit" value="Submit">
+
+<div style="text-align:center;">
+<input type="submit" value="Submit" class="form-submit-button">
+</div>
+
 </p>
 </div>
 </form>
 </fieldset>
 
-<p>
-<div style="text-align:center;">
-<button onclick="upload_handler()">Update Firmware</button>
-</div>
-</p>
-<p id="status"></p>
-<p id="upload_header"></p>
-<p id="upload"></p>
-<script>
-
-function upload_handler() {
-  document.getElementById("upload_header").innerHTML = "<h2>Upload File<h2>"
-  document.getElementById("status").innerHTML = "";
-  var uploadform =
-  "<form id=\"upload_form\" enctype=\"multipart/form-data\" method=\"post\">" +
-  "<input type=\"file\" name=\"file1\" id=\"file1\" onchange=\"uploadFile()\"><br>" +
-  "<progress id=\"progressBar\" value=\"0\" max=\"100\" style=\"width:300px;\"></progress>" +
-  "<h3 id=\"status\"></h3>" +
-  "<p id=\"loaded_n_total\"></p>" +
-  "</form>";
-  document.getElementById("upload").innerHTML = uploadform;
-  }
-
-
-function uploadFile() {
-  var file = document.getElementById("file1").files[0];
-  var formdata = new FormData();
-  formdata.append("file1", file);
-  var ajax = new XMLHttpRequest();
-  ajax.upload.addEventListener("progress", upload_progress_handler, false);
-  ajax.addEventListener("load", upload_complete_handler, false);
-  ajax.addEventListener("error", upload_error_handler, false);
-  ajax.addEventListener("abort", upload_abort_handler, false);
-  ajax.open("POST", "/");
-  ajax.send(formdata);
-  }
-
-function upload_progress_handler(event) {
-  document.getElementById("loaded_n_total").innerHTML = "Uploaded " + event.loaded + " bytes";
-  var percent = (event.loaded / event.total) * 100;
-  document.getElementById("progressBar").value = Math.round(percent);
-  document.getElementById("status").innerHTML = Math.round(percent) + "% uploaded... please wait";
-  if (percent >= 100) {
-    document.getElementById("upload_header").innerHTML = "";
-    document.getElementById("upload").innerHTML = "";
-  	}
-  }
-
-function upload_complete_handler(event) {
-  document.getElementById("status").innerHTML = "Upload Complete";
-  document.getElementById("progressBar").value = 0;
-  }
-
-function upload_error_handler(event) {
-  document.getElementById("status").innerHTML = "Upload Failed";
-  }
-
-function upload_abort_handler(event) {
-  document.getElementById("status").innerHTML = "Aborted";
-  }
-
-function handleClick(myRadio) {
-  //if(myRadio.value == "on"){
-  //  document.getElementById("div_internet").style.display = "";
-  //  }
-  //else{
-  //  document.getElementById("div_internet").style.display = "none";
-  //  }
-  }
-
-</script>
 </body>
+
 </html>
