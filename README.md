@@ -76,7 +76,7 @@ When
 * Watering is not required
 * No queued unsent records
 
-the total time each day not in deep-sleep mode is ~15 seconds. This includes time spent to get local time from an NTP server and check against RTC time.
+the total time each day not in deep-sleep mode is < 15 seconds. This includes time spent to get local time from an NTP server and check against RTC time.
 
 If watering is required, an additional 20 seconds assuming the default pump on-time of 20 seconds. 
 
