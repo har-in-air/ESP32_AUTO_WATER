@@ -67,7 +67,7 @@ new firmware binary file.  After the file is uploaded, the ESP32-C3 module will 
 <img src="docs/ontime_current_draw.png" />
 
 <br>
-The sensor was disconnected for this run : "Sensor reading  0". 
+The sensor was disconnected for this run. 
 
 When
 
