@@ -1,4 +1,5 @@
 #include <WiFi.h>
+#include <ESPmDNS.h>
 #include <HTTPClient.h>
 #include <esp_wifi.h>
 #include "nv_data.h"
@@ -6,42 +7,15 @@
 
 static String SzMonth[12]= {"Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"};
 
-//#define USE_HTTPS
 
-#ifdef USE_HTTPS
+#if 0
+
 #include <WiFiClientSecure.h>
 
 WiFiClientSecure client;
 
 static const char* SzGSHost = "script.google.com";
 static const int HttpsPort = 443;
-#endif
-
-bool gs_init() {
-	esp_wifi_start();
-	delay(100);
-	WiFi.mode(WIFI_STA);
-	WiFi.begin(GSConfig.wifiSSID.c_str(), GSConfig.wifiPassword.c_str());
-
-	// note : if the Access Point is not running, the timeout happens quickly. 
-	// This timeout appears to be for issues with connecting to a running AP,
-	// e.g. wrong password.
-	// In this situation, not only is the default timeout very long (60s),
-	// the average current drawn nearly doubles. So we reduce the timeout to 8s.
-	if (WiFi.waitForConnectResult(8000UL) != WL_CONNECTED) {
-		Serial.println("Connection to Internet AP failed!");
-		return false;
-		}
-	Serial.print("Connected, IP Address : ");
-	Serial.println(WiFi.localIP());
-#ifdef USE_HTTPS 
-	client.setInsecure();
-#endif
-	return true;
-	}
-
-
-#ifdef USE_HTTPS
 
 bool gs_update(GS_DATA_t &data) {
 	Serial.printf("connecting to %s\n", SzGSHost);
@@ -151,3 +125,33 @@ bool gs_update(GS_DATA_t &data) {
 	}
     
 #endif
+
+
+bool gs_init() {
+	esp_wifi_start();
+	delay(100);
+	WiFi.mode(WIFI_STA);
+	WiFi.begin(GSConfig.wifiSSID.c_str(), GSConfig.wifiPassword.c_str());
+
+	// note : if the Access Point is not running, the timeout happens quickly. 
+	// This timeout appears to be for issues with connecting to a running AP,
+	// e.g. wrong password.
+	// In this situation, not only is the default timeout very long (60s),
+	// the average current drawn nearly doubles. So we reduce the timeout to 8s.
+	if (WiFi.waitForConnectResult(8000UL) != WL_CONNECTED) {
+		Serial.println("Connection to Internet AP failed!");
+		return false;
+		}
+	Serial.print("Connected, IP Address : ");
+	Serial.println(WiFi.localIP());
+#if 0
+	client.setInsecure();
+#endif
+	if (!MDNS.begin("esp32")) { // Use http://esp32.local for web server page
+		Serial.println("Error setting up MDNS responder!");
+	    }
+	else {
+  		Serial.println("mDNS responder started");
+		}
+	return true;
+	}

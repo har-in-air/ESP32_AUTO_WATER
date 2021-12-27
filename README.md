@@ -120,8 +120,7 @@ The DS3231 datsheet gives us a useful option : leave the DS3231 VCC pin un-conne
     
 There are a couple of caveats : 
 1. It takes a couple of seconds for the oscillator to start up the first time power is applied to VBAT.
-2. If you disconnect the battery, there is no backup so the RTC loses all date/time information. This is not an issue if Google Sheet updates are enabled. When the ESP32-C3 connects to the internet, it updates the RTC with date & time from an Network Time Protocol (NTP) server.<br> 
-If Google Sheet updates are disabled, manually set the RTC date/time via the WiFi configuration web page. 
+2. If you disconnect the battery, there is no backup so the RTC loses all date/time information. This is not an issue if Google Sheet updates are enabled. When the ESP32-C3 connects to the internet, it updates the RTC with date & time from an Network Time Protocol (NTP) server. If Google Sheet updates are disabled, manually set the RTC date/time via the WiFi configuration web page. 
 
 ### ESP32-C3 Wake-up Reset Pulse
 A 4.7uF capacitor in series between the DS3231 INT_ output pin and the ESP32-C3 EN pin generates a reset pulse for the ESP32-C3 at the daily scheduled time.
