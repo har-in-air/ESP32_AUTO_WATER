@@ -8,6 +8,12 @@ Power for the electronics comes from a Li-Poly battery (or 4 x 1.5V AA cells).
 
 The system is self-contained. No mains power supply or connection to a water faucet is required.
 
+<br>
+
+<img src="docs/hardware.jpg" />
+
+<br>
+
 In normal watering mode, the ESP32-C3 is woken up from deep-sleep once a day at a scheduled time by the DS3231 RTC. It checks the soil moisture level and if required, turns on the water pump for a fixed duration (e.g. 20 seconds). 
 
 It then (optionally) logs the calendar date and time, moisture sensor reading, power supply voltages, watering duration, RTC clock drift (compared to Network time) as a row of entries in a Google Docs spreadsheet document. 
@@ -18,8 +24,10 @@ If data upload is enabled and internet access is available, any queued records i
 
 Up to 30 data records can be queued in ESP32 flash. After 30 days, the oldest queued record will be over-written by the new data record.
 
-<img src="docs/autowater_gs_update.png" />
 <br>
+
+<img src="docs/autowater_gs_update.png" />
+
 <br>
 
 ## Configuration
@@ -49,15 +57,19 @@ Click on the `Submit` button after making changes to the configuration options o
 
 When you are done with configuration, press the hardware reset button on the ESP32-C3 module. The system will reboot in normal watering mode.
 
-<img src="docs/ap_config_homepage.png" />
 <br>
+
+<img src="docs/ap_config_homepage.png" />
+
 <br>
 
 ## OTA Firmware Updates
 You can update the firmware via the WiFi server webpage url `http://192.168.4.1/update`. Choose the new firmware binary file.  After the file is uploaded, the ESP32-C3 module will automatically re-boot with the updated firmware. Check the new firmware revison string in the configuration server home page (assuming the revision string has been updated along with code changes).
 
-<img src="docs/ap_firmware_update.png" />
 <br>
+
+<img src="docs/ap_firmware_update.png" />
+
 <br>
 
 # Execution Log and Current Drain in Active Mode
@@ -91,6 +103,7 @@ In deep-sleep mode, the total circuit current drain is ~15uA.
 * ~160kByte LittleFS partition for hosting HTML web server pages
 
 # Hardware 
+
 ## [Circuit Schematic](docs/espc3_autowater_schematic.pdf)
 
 ## Power supplies
@@ -128,7 +141,12 @@ A 4.7uF capacitor in series between the DS3231 INT_ output pin and the ESP32-C3 
 For the ESP32-C3 EN pin, I used a 2.2K resistor pullup to VCC and a 1uF ceramic cap to ground. 
 
 ## Capacitive Soil Moisture Sensor
+
+<br>
+
 <img src="docs/capacitive_sensor.png" />
+
+<br>
 
 [Ensure you have a capacitive sensor module that actually works!](https://www.youtube.com/watch?v=IGP38bz-K48) The version I have uses a 555 timer IC marked "NE555 20M". 
 
@@ -142,11 +160,19 @@ This particular sensor module has a current draw of ~6mA.  It has an on-board vo
 
 ## Power Mosfet Switch Module for Water Pump
 
+<br>
+
 <img src="docs/mosfet_control_module.png" />
+
+<br>
 
 I used this module to control the water pump. The PWM input is connected to an ESP32-C3 GPIO pin for simple on-off control. 
 
+<br>
+
 <img src="docs/LR7843-MOSFET-Control-Module-Schematic.jpg" />
+
+<br>
 
 The super-capacitor power bank provides the DC power supply for the water pump. 
 
