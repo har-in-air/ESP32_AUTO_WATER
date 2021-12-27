@@ -69,7 +69,7 @@ void setup() {
         rtc_set_daily_alarm(alarm);
         }
   
-    Serial.println("\nFor WiFi AP mode, press and hold button (GPIO0) until you hear a long tone");
+    Serial.println("\nFor WiFi AP mode, press and hold button (GPIO9) until you hear a long tone");
     int btnConfig;
     int counter = 5;
     do {
@@ -86,7 +86,7 @@ void setup() {
 	supercap_voltage();
 
     if (btnConfig == 0) {
-        // GPIO0 button is pressed
+        // GPIO9 button is pressed
         Serial.println("\n====== Access Point Configuration Mode ======");
 		Serial.println("SSID=EspTimer Password=123456789  URL=http://192.168.4.1");
 		// 3 second 1000Hz beep  to confirm unit is now in standalone Access Point and 
