@@ -30,7 +30,7 @@ In the spreadsheet below, we can see that :
 1. For the first entry, the battery was connected, the DS3231 RTC local date and time is 00:00, Jan 1, 2000. So there is a large initial error between NTP time and RTC time.
 2. On Dec 29, Jan 12 and Jan 16 the system was not able to connect to the Internet. I use my mobile phone as a hot-spot for Internet access, so it may not always be located within range.
  The queued data records for these days were successfully uploaded on the next day.
-3. The accompanying charts  are automtically updated whenever a new row entry is added to the spreadsheet - no extra api call is required.
+3. The accompanying charts  are automatically updated whenever a new row entry is added to the spreadsheet.
 4. This is using a small 200mAH lipoly battery (seen in the prototype picture) as an experiment in power consumption.
 <p>
 <img src="docs/autowater_gs_update.png" />
@@ -65,11 +65,16 @@ Click on the `Submit` button after making changes to the configuration options o
 
 When you are done with configuration, press the hardware reset button on the ESP32-C3 module. The system will reboot in normal watering mode.
 
-<br>
+<p>
 
 <img src="docs/ap_config_homepage.png" />
 
-<br>
+<p>
+
+## Google Sheet update
+[Tutorial](https://www.youtube.com/watch?v=RRQvySxaCW0)
+
+[This is the script code](docs/google_script_readme.txt) for the remote sheet update. See the credits section below as well.
 
 ## OTA Firmware Updates
 You can update the firmware via the WiFi server webpage url `http://192.168.4.1/update`. Choose the new firmware binary file.  After the file is uploaded, the ESP32-C3 module will automatically re-boot with the updated firmware. Check the new firmware revison string in the configuration server home page (assuming the revision string has been updated along with code changes).
