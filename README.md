@@ -8,11 +8,11 @@ Power for the electronics comes from a Li-Poly battery (or 4 x 1.5V AA cells).
 
 The system is self-contained. No mains power supply or connection to a water faucet is required.
 
-<br>
+<o>
 
 <img src="docs/hardware.jpg" />
 
-<br>
+<o>
 
 In normal watering mode, the ESP32-C3 is woken up from deep-sleep once a day at a scheduled time by the DS3231 RTC. It checks the soil moisture level and if required, turns on the water pump for a fixed duration (e.g. 20 seconds). 
 
@@ -24,11 +24,19 @@ If data upload is enabled and internet access is available, any queued records i
 
 Up to 30 data records can be queued in ESP32 flash. After 30 days, the oldest queued record will be over-written by the new data record.
 
-<br>
+<p>
 
+In the spreadsheet below, we can see that :
+1. For the first entry, the battery was connected, the DS3231 RTC local date and time is 00:00, Jan 1, 2000. So there is a large initial error between NTP time and RTC time.
+2. On Dec 29, Jan 12 and Jan 16 the system was not able to connect to the Internet. I use my mobile phone as a hot-spot for Internet access, so it may not always be located within range.
+ The queued data records for these days were successfully uploaded on the next day.
+3. The accompanying charts  are automtically updated whenever a new row entry is added to the spreadsheet - no extra api call is required.
+4. This is using a small 200mAH lipoly battery (seen in the prototype picture) as an experiment in power consumption.
+<p>
 <img src="docs/autowater_gs_update.png" />
 
-<br>
+
+<p>
 
 ## Configuration
 To configure the watering system, press the reset button for the ESP32-C3 module and then immediately press the configuration button (GPIO9) when you hear a pulsing tone. Keep it pressed until you hear a long confirmation tone, and then release. The system is now configured as a stand-alone WiFi Access Point with SSID `ESPC3WaterTimer` and password `123456789`.
@@ -98,9 +106,9 @@ In deep-sleep mode, the total circuit current drain is ~15uA.
 
 # Build Environment
 * Ubuntu 20.04 LTS AMDx64
-* Visual Studio Code with PlatformIO plugin using Arduino framework targeting `esp32dev` board. The file `platformio.ini` specifies the framework packages and toolchain required for the ESP32-C3, and the libraries used by the project. ESP32-C3 Arduino framework support is new and not as solid as for the ESP32. A minor type-cast compile error for the AsyncTCP library had to be fixed by editing the local version of the library source code in the project `.pio` subdirectory.
-* Custom `partition.csv` file with two 1.9MB code partitions supporting OTA firmware updates
-* ~160kByte LittleFS partition for hosting HTML web server pages
+* Visual Studio Code with PlatformIO plugin using Arduino framework targeting `esp32dev` board. The file `platformio.ini` specifies the framework packages and toolchain required for the ESP32-C3, and the libraries used by the project. The ESP32-C3 Arduino framework support is new and not as solid as for the ESP32. A minor type-cast compile error for the AsyncTCP library had to be fixed by editing the local version of the library source code in the project `.pio` subdirectory.
+* Custom `partition.csv` file with two 1.9MB code partitions supporting OTA firmware updates.
+* ~160kByte LittleFS partition for hosting static HTML and CSS content.
 
 # Hardware 
 
