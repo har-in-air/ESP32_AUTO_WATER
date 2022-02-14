@@ -13,20 +13,23 @@ The system is self-contained. No mains power supply or connection to a water fau
 <img src="docs/hardware.jpg" />
 
 <o>
+System control parameters are configured via a WiFi access point and web server page.
 
 In normal watering mode, the ESP32-C3 is woken up from deep-sleep once a day at a scheduled time by the DS3231 RTC. It checks the soil moisture level and if required, turns on the water pump for a fixed duration (e.g. 20 seconds). 
 
 It then (optionally) logs the calendar date and time, moisture sensor reading, power supply voltages, watering duration, RTC clock drift (compared to Network time) as a row of entries in a Google Docs spreadsheet document. 
 
-If the data upload option is enabled and internet access is not available, this data record is queued to a buffer in ESP32-C3 flash memory. 
+If the Google Sheet access option is enabled and internet access is not available, this data record is queued to a buffer in ESP32-C3 flash memory. 
 
-If data upload is enabled and internet access is available, any queued records in flash are removed from the queue and uploaded to the spreadsheet, before the current days data record. 
+If Google Sheet access is enabled and internet access is available, any queued records in flash are removed from the queue and uploaded to the spreadsheet, before the current days data record. 
 
 Up to 30 data records can be queued in ESP32 flash. After 30 days, the oldest queued record will be over-written by the new data record.
 
+The schedule parameters (wake-up hour and minute, sensor threshold, watering time) configured via WiFi can be over-ridden by contents of a control tab in the Google Sheets document.
+
 <p>
 
-In the spreadsheet below, we can see that :
+The spreadsheet tab "AutoWater" is used for logging data. We can see that :
 1. For the first entry, the battery was connected, the DS3231 RTC local date and time is 00:00, Jan 1, 2000. So there is a large initial error between NTP time and RTC time.
 2. On Dec 29, Jan 12 and Jan 16 the system was not able to connect to the Internet. I use my mobile phone as a hot-spot for Internet access, so it may not always be located within range.
  The queued data records for these days were successfully uploaded on the next day.
@@ -37,6 +40,10 @@ In the spreadsheet below, we can see that :
 
 
 <p>
+The spreadsheet tab "Control" is used to over-ride the wifi-configured schedule parameters. They will take effect on the next scheduled reset and boot. If the spreadsheet entry is marked with an 'x', the currently configured parameters stored in the flash partition will be used.
+
+In the example below, we only want to over-ride the sensor threshold for watering.
+<img src="docs/autowater_gs_control.png" />
 
 ## Configuration
 To configure the watering system, press the reset button for the ESP32-C3 module and then immediately press the configuration button (GPIO9) when you hear a pulsing tone. Keep it pressed until you hear a long confirmation tone, and then release. The system is now configured as a stand-alone WiFi Access Point with SSID `ESPC3WaterTimer` and password `123456789`.
@@ -74,7 +81,9 @@ When you are done with configuration, press the hardware reset button on the ESP
 ## Google Sheet update
 [Tutorial](https://www.youtube.com/watch?v=RRQvySxaCW0)
 
-[This is the script code](docs/google_script_readme.txt) for the remote sheet update. See the credits section below as well.
+This is the google script code used for logging data to the "AutoWater" sheet and retrieving the schedule parameters from the "Control" sheet in our Google Docs sheet.
+
+<img src="docs/gs_script.png" />
 
 ## OTA Firmware Updates
 You can update the firmware via the WiFi server webpage url `http://192.168.4.1/update`. Choose the new firmware binary file.  After the file is uploaded, the ESP32-C3 module will automatically re-boot with the updated firmware. Check the new firmware revison string in the configuration server home page (assuming the revision string has been updated along with code changes).
