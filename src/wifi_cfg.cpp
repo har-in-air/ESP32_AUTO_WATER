@@ -59,8 +59,12 @@ static String string_processor(const String& var){
 		return GSConfig.gsID;
 		}
 	else
-	if(var == "GS_SHEET"){
-		return GSConfig.gsSheet;
+	if(var == "GS_LOG_SHEET"){
+		return GSConfig.gsLogSheet;
+		}
+	else
+	if(var == "GS_CONTROL_SHEET"){
+		return GSConfig.gsControlSheet;
 		}
 	else
 	if(var == "WIFI_SSID"){
@@ -187,10 +191,15 @@ static void get_handler(AsyncWebServerRequest *request) {
         bGSConfigChange = true; 
         GSConfig.gsID = inputMessage;
         }
-    if (request->hasParam("gsSheet")) {
-        inputMessage = request->getParam("gsSheet")->value();
+    if (request->hasParam("logSheet")) {
+        inputMessage = request->getParam("logSheet")->value();
         bGSConfigChange = true; 
-        GSConfig.gsSheet = inputMessage;
+        GSConfig.gsLogSheet = inputMessage;
+        }
+    if (request->hasParam("controlSheet")) {
+        inputMessage = request->getParam("controlSheet")->value();
+        bGSConfigChange = true; 
+        GSConfig.gsControlSheet = inputMessage;
         }
     if (request->hasParam("wifiSSID")) {
         inputMessage = request->getParam("wifiSSID")->value();

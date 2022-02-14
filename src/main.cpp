@@ -21,7 +21,8 @@
 #define pinConfigBtn    9  // wifi AP & webserver enable
 #define pinGate         18 // external current monitor gate signal
 
-const char* FirmwareRevision = "1.00";
+const char* FirmwareRevision = "1.10";
+static void update_schedule_from_sheet(String& control);
  
 void setup() {
     uint32_t marker = millis();
@@ -157,15 +158,19 @@ void setup() {
 						Serial.println("Updated RTC from NTP");
 						}
 					}
+				String control;
 				// if there are unsent data records, upload them first starting from the oldest
 				while (LogBuffer.numEntries > 0) {
 					GS_DATA_t logData;
 					log_buffer_dequeue(LogBuffer, logData);
-					gs_update(logData);
+					gs_update(logData, control);
 					delay(250);
 					}
 				// upload today's data
-				gs_update(gsData);
+				bool bUpdate = gs_update(gsData, control);
+				if (bUpdate) {
+					update_schedule_from_sheet(control);
+					}
 				}
 			else {
 				// unable to connect to internet, append today's data to the buffer queue
@@ -197,4 +202,67 @@ void loop() {
 	}
 
 
-  
+static void update_schedule_from_sheet(String& control) {
+  	char* szControl = (char*) control.c_str();
+	Serial.printf("Control string = %s\r\n", szControl);
+	char* szToken = strtok(szControl, ",");
+	if (strcmp(szToken, "ok")) {
+		Serial.println("Unexpected chars, expected 'ok'");
+		}
+	else {
+		bool bScheduleChange = false;
+       	szToken = strtok(NULL, ",");
+		if ((szToken != NULL) && strcmp(szToken,"x") && strcmp(szToken,"X")) {
+			int val = strtol(szToken,NULL,10);
+			Serial.printf("Hour = %d\n", val);
+			if (val >= 9 && val <= 15) {
+				if (val != Schedule.hour) {
+					bScheduleChange = true;
+					Schedule.hour = val;
+					}
+				}
+			}
+       	szToken = strtok(NULL, ",");
+		if ((szToken != NULL) && strcmp(szToken,"x") && strcmp(szToken,"X")) {
+			int val = strtol(szToken,NULL,10);
+			Serial.printf("Minute = %d\n", val);
+			if (val >= 0 && val <= 59) {
+				if (val != Schedule.minute) {
+					bScheduleChange = true;
+					Schedule.minute = val;
+					}
+				}
+			}
+       	szToken = strtok(NULL, ",");
+		if ((szToken != NULL) && strcmp(szToken,"x") && strcmp(szToken,"X")) {
+			int val = strtol(szToken,NULL,10);
+			Serial.printf("Threshold = %d\n", val);
+			if (val >= 350 && val <= 1000) {
+				if (val != Schedule.sensorThreshold) {
+					bScheduleChange = true;
+					Schedule.sensorThreshold = val;
+					}
+				}
+			}
+       	szToken = strtok(NULL, ",");
+		if ((szToken != NULL) && strcmp(szToken,"x") && strcmp(szToken,"X")) {
+			int val = strtol(szToken,NULL,10);
+			Serial.printf("OnSecs = %d\n", val);
+			if (val >= 5 && val <= 25) {
+				if (val != Schedule.onTimeSeconds) {
+					bScheduleChange = true;
+					Schedule.onTimeSeconds = val;
+					}
+				}
+			}
+		if (bScheduleChange) {
+			Serial.printf("Watering options changed, saving schedule and resetting RTC daily alarm\n");
+			schedule_store(Schedule);
+			RTC_ALARM alarm;
+			alarm.hour = Schedule.hour;
+			alarm.minute = Schedule.minute;
+			rtc_set_daily_alarm(alarm);
+			bScheduleChange = false;
+			}
+		}
+	}

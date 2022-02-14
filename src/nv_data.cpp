@@ -17,7 +17,8 @@ LOG_BUFFER_t LogBuffer;
 
 #define DEFAULT_GS_UPDATE        1
 #define DEFAULT_GS_ID           "google_sheet_id"  
-#define DEFAULT_GS_SHEET        "sheet_name"  
+#define DEFAULT_GS_LOG_SHEET    "log_sheet_name"  
+#define DEFAULT_GS_CONTROL_SHEET    "control_sheet_name"  
 #define DEFAULT_WIFI_SSID       "ssid"
 #define DEFAULT_WIFI_PASSWORD   "password"
 #define DEFAULT_UTC_OFFSET_SECS    (330*60)
@@ -33,7 +34,8 @@ void  gs_config_load(GS_CONFIG_t &gsConfig){
 	else {
 		gsConfig.update = Prefs.getUInt("update", DEFAULT_GS_UPDATE);
 		gsConfig.gsID = Prefs.getString("gsID", DEFAULT_GS_ID);
-		gsConfig.gsSheet = Prefs.getString("gsSheet", DEFAULT_GS_SHEET);
+		gsConfig.gsLogSheet = Prefs.getString("gsLogSheet", DEFAULT_GS_LOG_SHEET);
+		gsConfig.gsControlSheet = Prefs.getString("gsControlSheet", DEFAULT_GS_CONTROL_SHEET);
 		gsConfig.wifiSSID = Prefs.getString("wifiSSID", DEFAULT_WIFI_SSID);
 		gsConfig.wifiPassword = Prefs.getString("wifiPassword", DEFAULT_WIFI_PASSWORD);
 		gsConfig.utcOffsetSeconds = Prefs.getInt("utcOffset", DEFAULT_UTC_OFFSET_SECS);
@@ -46,7 +48,8 @@ void  gs_config_load(GS_CONFIG_t &gsConfig){
 void gs_config_reset(GS_CONFIG_t &gsConfig) {
 	gsConfig.update = DEFAULT_GS_UPDATE;
 	gsConfig.gsID = DEFAULT_GS_ID; 
-	gsConfig.gsSheet = DEFAULT_GS_SHEET;
+	gsConfig.gsLogSheet = DEFAULT_GS_LOG_SHEET;
+	gsConfig.gsControlSheet = DEFAULT_GS_CONTROL_SHEET;
 	gsConfig.wifiSSID = DEFAULT_WIFI_SSID;
 	gsConfig.wifiPassword = DEFAULT_WIFI_PASSWORD;
 	gsConfig.utcOffsetSeconds = DEFAULT_UTC_OFFSET_SECS;
@@ -60,7 +63,8 @@ void gs_config_store(GS_CONFIG_t &gsConfig){
 	Prefs.clear(); 
 	Prefs.putUInt("update", gsConfig.update); 
 	Prefs.putString("gsID", gsConfig.gsID); 
-	Prefs.putString("gsSheet", gsConfig.gsSheet); 
+	Prefs.putString("gsLogSheet", gsConfig.gsLogSheet); 
+	Prefs.putString("gsControlSheet", gsConfig.gsControlSheet); 
 	Prefs.putString("wifiSSID", gsConfig.wifiSSID); 
 	Prefs.putString("wifiPassword", gsConfig.wifiPassword); 
 	Prefs.putInt("utcOffset", gsConfig.utcOffsetSeconds);

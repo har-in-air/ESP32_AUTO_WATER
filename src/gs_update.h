@@ -18,6 +18,6 @@ typedef struct {
 #define RTC_ERROR_NOT_CALC 9999
 
 bool gs_init();
-bool gs_update(GS_DATA_t &data);
+bool gs_update(GS_DATA_t &data, String& control);
 
 #endif

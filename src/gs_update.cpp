@@ -97,11 +97,15 @@ const char* root_ca= \
 "-----END CERTIFICATE-----"; 
 
 
-bool gs_update(GS_DATA_t &data) {
-	if (WiFi.status() != WL_CONNECTED) return false;
+bool gs_update(GS_DATA_t &data, String& control) {
+	if (WiFi.status() != WL_CONNECTED) {
+		Serial.println("Error : no connection to internet!");
+		return false;
+		}
 	HTTPClient http;
 	String url = "https://script.google.com/macros/s/" + GSConfig.gsID + "/exec?";
-	url += "id=" + GSConfig.gsSheet;
+	url += "logID=" + GSConfig.gsLogSheet;
+	url += "&controlID=" + GSConfig.gsControlSheet;
 	url += "&Date=" + SzMonth[data.month-1] + String(data.day);
 	url += "&Time="  + String(data.hour) + ":" + (data.minute < 10 ? "0" + String(data.minute) : String(data.minute));
 	url += "&SensorReading=" + String(data.sensorReading);
@@ -110,16 +114,35 @@ bool gs_update(GS_DATA_t &data) {
 	url += "&BatteryVoltage=" + String(data.batteryVoltage, 1);
 	url += "&SuperCapVoltage=" + String(data.superCapVoltage, 1);
 	url += "&NTPminusRTC=" + (data.rtcError == RTC_ERROR_NOT_CALC ? "N.A." : String(data.rtcError));
+    const char *location = "Location";	
 	http.begin(url, root_ca); 
+    const char *headerKeys[] = {location};
+    http.collectHeaders(headerKeys, 1);
 	int httpCode = http.GET();
-	http.end();
-	if (httpCode > 0) { 
-		Serial.print("Http Code expect 302, received ");Serial.println(httpCode);
-		// redirect code 302 is the expected result
-		return httpCode == 302 ? true : false;
+	// expecting redirect code (302)
+	if (httpCode == 302) { 
+		String redirectUrl = http.header(location);
+		http.end();
+		Serial.print("redirectUrl = ");
+		Serial.println(redirectUrl);
+
+		http.begin(redirectUrl, root_ca);
+		httpCode = http.GET();
+		Serial.printf("\r\nStatus code = %d\n", httpCode);
+		bool result = false;
+		if (httpCode == 200) {
+			control = http.getString();
+			result = true;
+			}
+		else {
+			Serial.println("Error on redirect");
+			}
+		http.end();
+		return result;
 		} 
 	else {
 		Serial.println("Error on HTTP request");
+		http.end();
 		return false;
 		}
 	}
@@ -155,3 +178,54 @@ bool gs_init() {
 		}
 	return true;
 	}
+
+
+#if 0
+// Google Apps Script for Google Docs Sheet bidirectional update
+// ESP32 uploads the log data to the sheet tab "Autowater"
+// ESP32 downloads schedule changes from the sheet tab "Control"
+// Any schedule parameters not  marked 'x' will override the currently configured values 
+// and be stored in Preferences flash partition. Schedule parameters  marked with 'x'
+// will retain their currently configured values.
+
+// Name and save the Google Doc e.g. "Data_Logger"
+// First column in spreadsheet should have header "Timestamp", 
+// rest as per requirements e.g. "SensorReading", "Threshold" etc
+// Name the sheet (bottom tag), "Autowater"
+
+// Create a second sheet with tag "Control"
+// The first row has titles "Hour", "Minute", "Threshold", "OnSecs"
+// The second row has the control values for these fields, e.g. 12, 0, 425, 25
+
+// Use Menu Extensions->Apps Script and create or edit the file "Code.gs" for the "doGet()" function
+// and insert this function
+// Use Deploy -> New Deployment after you create or make a change to this script.
+// You will get the updated spreadsheet id key, make a copy for your upload code.
+
+// The url to use in the upload code is as per the following example :
+// https://script.google.com/macros/s/insert_spreadsheet_id_key/exec?logID=AutoWater&controlID=Control&Date=Nov15&Time=20:49&SensorReading=356&SensorThreshold=360&OnTimeSeconds=0&BatteryVoltage=3.8&SuperCapVoltage=17.9
+
+// https://stackoverflow.com/questions/69685813/problem-esp32-send-data-to-google-sheet-through-google-app-script
+
+function doGet(e) {
+  try {
+    var logSheet = SpreadsheetApp.getActive().getSheetByName(e.parameter["logID"]);
+    var controlSheet = SpreadsheetApp.getActive().getSheetByName(e.parameter["controlID"]);
+    var headers = logSheet.getRange(1, 1, 1, logSheet.getLastColumn()).getValues()[0];
+    var d = new Date();
+    var values = headers.map(h => h == "Timestamp" ? d.toDateString() + ", " + d.toLocaleTimeString() : e.parameter[h]);
+    logSheet.getRange(logSheet.getLastRow() + 1, 1, 1, values.length).setValues([values]);
+
+    var ctrlHour = controlSheet.getRange(2,1).getValue();
+    var ctrlMinute = controlSheet.getRange(2,2).getValue();
+    var ctrlThreshold = controlSheet.getRange(2,3).getValue();
+    var ctrlOnSeconds = controlSheet.getRange(2,4).getValue();
+    retSz = "ok" + "," + ctrlHour + "," + ctrlMinute + "," + ctrlThreshold + "," + ctrlOnSeconds;
+    return ContentService.createTextOutput(retSz);
+  } 
+  catch (e) {
+    return ContentService.createTextOutput(JSON.stringify(e));
+    } 
+}
+
+#endif

@@ -20,7 +20,8 @@ typedef struct {
 typedef struct {
   uint32_t update;
   String gsID;
-  String gsSheet;
+  String gsLogSheet;
+  String gsControlSheet;
   String wifiSSID;
   String wifiPassword;
   int32_t utcOffsetSeconds;
