@@ -99,7 +99,7 @@ You can update the firmware via the WiFi server webpage url `http://192.168.4.1/
 <img src="docs/ontime_current_draw.png" />
 
 The sensor was disconnected for this run. This is from an  earlier version of the code. Google Sheets returns a redirect HTTP code (302). In the current
-version of the code, we then connect to the redirected url to retrieve the control parameters from the html response, which does return the expected 200 success code.
+version of the code, we then connect to the redirected url to retrieve the control parameters from the html response. This does return the expected 200 success code.
 
 When
 * Google Sheet update is enabled
