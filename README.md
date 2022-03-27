@@ -39,15 +39,15 @@ The spreadsheet tab `AutoWater` is used for logging data. We can see that :
 <img src="docs/autowater_gs_update.png" />
 
 
-Entries in the spreadsheet tab `Control` set the wifi-configured schedule parameters. If the spreadsheet entry is an 'x', no modification of the currently configured parameter is required.
+We can edit the spreadsheet tab `Control` to remotely set the watering schedule parameters. If the spreadsheet entry is an 'x', no modification of the currently configured parameter is required.
 
-In the example below, we set the sensor threshold for watering while the other schedule parameters are unchanged from their existing values.
+In the example below, we have edited the `Control` tab to set the sensor threshold, while the other schedule parameters are not modified from their existing values.
 
 <img src="docs/autowater_gs_control.png" />
 
-Note that these settings are read only on the next scheduled wake-up, and then set for the following day.
+Note that these schedule settings are read only on the next scheduled wake-up, and then set for the following day.
 
-When we use the WiFi webpage  to configure schedule parameters, the changes are immediate, e.g. if we edit the settings at 9am and set the daily wake up time to 11am and then reset the system, the unit will wake up at 11am that day.
+When we use the WiFi webpage to configure schedule parameters, the changes are immediate, e.g. if we edit the settings at 9am and set the daily wake up time to 11am and then reset the system, the unit will wake up at 11am that day.
 
 
 To summarize : 
