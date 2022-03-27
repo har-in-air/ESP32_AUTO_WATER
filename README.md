@@ -25,7 +25,7 @@ If Google Sheet access is enabled and internet access is available, any queued r
 
 Up to 30 data records can be queued in ESP32 flash. After 30 days, the oldest queued record will be over-written by the new data record.
 
-The schedule parameters (wake-up hour and minute, sensor threshold, watering time) configured via WiFi can be over-ridden by contents of a control tab in the Google Sheets document.
+Schedule parameters (daily wake-up hour and minute, sensor threshold, watering time) configured via WiFi can be over-ridden by entries in a control sheet tab in the Google document.
 
 <p>
 
@@ -34,15 +34,16 @@ The spreadsheet tab "AutoWater" is used for logging data. We can see that :
 2. On Dec 29, Jan 12 and Jan 16 the system was not able to connect to the Internet. I use my mobile phone as a hot-spot for Internet access, so it may not always be located within range.
  The queued data records for these days were successfully uploaded on the next day.
 3. The accompanying charts  are automatically updated whenever a new row entry is added to the spreadsheet.
-4. This is using a small 200mAH lipoly battery (seen in the prototype picture) as an experiment in power consumption.
+4. The prototype uses a small 200mAH lipoly battery as an experiment in optimizing power consumption.
 <p>
 <img src="docs/autowater_gs_update.png" />
 
 
 <p>
-The spreadsheet tab "Control" is used to over-ride the wifi-configured schedule parameters. They will take effect on the next scheduled reset and boot. If the spreadsheet entry is marked with an 'x', the currently configured parameters stored in the flash partition will be used.
+Entries in the spreadsheet tab "Control" are used to replace the wifi-configured schedule parameters. If the spreadsheet entry is an 'x', no modification of the currently configured parameter is required.
 
-In the example below, we only want to over-ride the sensor threshold for watering.
+In the example below, we set the sensor threshold for watering while the other schedule parameters are not modified.
+
 <img src="docs/autowater_gs_control.png" />
 
 ## Configuration
@@ -98,8 +99,9 @@ You can update the firmware via the WiFi server webpage url `http://192.168.4.1/
 
 <img src="docs/ontime_current_draw.png" />
 
-The sensor was disconnected for this run. This is from an  earlier version of the code. Google Sheets returns a redirect HTTP code (302). In the current
-version of the code, we then connect to the redirected url to retrieve the control parameters from the html response. This does return the expected 200 success code.
+The sensor was disconnected for this run. This log is from an  earlier version of the code. 
+
+Google Sheets returns a redirect HTTP code (302). In the current version of the code, we then connect to the redirected url to retrieve the control parameters from the html response. This returns the expected success HTTP code (200).
 
 When
 * Google Sheet update is enabled
@@ -238,6 +240,8 @@ To compensate for the increased internal resistance on discharge, I soldered a 1
 Prior to this I tried to measure the self-discharge leakage current of the capacitor by charging it with a battery. When it had fully charged, the residual current was below the resolution of my current meter. So I'm assuming the capacitor adds insignificant self-discharge leakage to the combined (li-poly + capacitor) battery. 
 
 Even assuming just 100mAHr capacity, that gives us 100/0.64 = 156 days! Hard to believe. Let's see if the capacitor in parallel will act as a low ESR storage bank for high current pulses and prevent ESP32-C3 brown-outs when the li-poly battery has discharged 50% to 3.6V.
+
+[Updated PDF export of spreadsheet as of 2022 March 27](docs/Data_Logger%20-%20AutoWater.pdf)
 
 # Credits
 * [Updating Google Sheet via HTTPS](https://stackoverflow.com/questions/69685813/problem-esp32-send-data-to-google-sheet-through-google-app-script)
