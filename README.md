@@ -25,29 +25,38 @@ If Google Sheet access is enabled and internet access is available, any queued r
 
 Up to 30 data records can be queued in ESP32 flash. After 30 days, the oldest queued record will be over-written by the new data record.
 
-Schedule parameters (daily wake-up hour and minute, sensor threshold, watering time) configured via WiFi can be over-ridden by entries in a control sheet tab in the Google document.
+Schedule parameters (daily wake-up hour and minute, sensor threshold, watering time) configured via WiFi can be also be set by manually editing entries in a control sheet tab in the Google spreadsheet. 
 
 <p>
 
-The spreadsheet tab "AutoWater" is used for logging data. We can see that :
+The spreadsheet tab `AutoWater` is used for logging data. We can see that :
 1. For the first entry, the battery was connected, the DS3231 RTC local date and time is 00:00, Jan 1, 2000. So there is a large initial error between NTP time and RTC time.
 2. On Dec 29, Jan 12 and Jan 16 the system was not able to connect to the Internet. I use my mobile phone as a hot-spot for Internet access, so it may not always be located within range.
  The queued data records for these days were successfully uploaded on the next day.
 3. The accompanying charts  are automatically updated whenever a new row entry is added to the spreadsheet.
 4. The prototype uses a small 200mAH lipoly battery as an experiment in optimizing power consumption.
-<p>
+
 <img src="docs/autowater_gs_update.png" />
 
 
-<p>
-Entries in the spreadsheet tab "Control" are used to replace the wifi-configured schedule parameters. If the spreadsheet entry is an 'x', no modification of the currently configured parameter is required.
+Entries in the spreadsheet tab `Control` set the wifi-configured schedule parameters. If the spreadsheet entry is an 'x', no modification of the currently configured parameter is required.
 
-In the example below, we set the sensor threshold for watering while the other schedule parameters are not modified.
+In the example below, we set the sensor threshold for watering while the other schedule parameters are unchanged from their existing values.
 
 <img src="docs/autowater_gs_control.png" />
 
-## Configuration
-To configure the watering system, press the reset button for the ESP32-C3 module and then immediately press the configuration button (GPIO9) when you hear a pulsing tone. Keep it pressed until you hear a long confirmation tone, and then release. The system is now configured as a stand-alone WiFi Access Point with SSID `ESPC3WaterTimer` and password `123456789`.
+Note that these settings are read only on the next scheduled wake-up, and then set for the following day.
+
+When we use the WiFi webpage  to configure schedule parameters, the changes are immediate, e.g. if we edit the settings at 9am and set the daily wake up time to 11am and then reset the system, the unit will wake up at 11am that day.
+
+
+To summarize : 
+1. the `Autowater` spreadsheet tab is a write-only page for the watering system and is used to log data
+2. the `Control` spreadsheet tab is a read-only page for the watering system and can be used to set schedule parameters remotely without access to the watering system. 
+
+
+## WiFi Webpage Configuration
+To configure the watering system using WiFi, press the reset button for the ESP32-C3 module and then immediately press the configuration button (GPIO9) when you hear a pulsing tone. Keep it pressed until you hear a long confirmation tone, and then release. The system is now configured as a stand-alone WiFi Access Point with SSID `ESPC3WaterTimer` and password `123456789`.
 
 A web server running on this Access Point at the url `http://192.168.4.1` can then be used to configure the following :
 * System Options
