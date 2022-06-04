@@ -250,7 +250,7 @@ Prior to this I tried to measure the self-discharge leakage current of the capac
 
 Even assuming just 100mAHr capacity, that gives us 100/0.64 = 156 days! Hard to believe. Let's see if the capacitor in parallel will act as a low ESR storage bank for high current pulses and prevent ESP32-C3 brown-outs when the li-poly battery has discharged 50% to 3.6V.
 
-[Updated PDF export of spreadsheet as of 2022 March 27](docs/Data_Logger%20-%20AutoWater.pdf)
+[Updated PDF export of spreadsheet (2022 June 4)](docs/Data_Logger%20-%20AutoWater.pdf)
 
 # Credits
 * [Updating Google Sheet via HTTPS](https://stackoverflow.com/questions/69685813/problem-esp32-send-data-to-google-sheet-through-google-app-script)
