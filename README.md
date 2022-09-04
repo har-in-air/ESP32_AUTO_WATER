@@ -39,15 +39,17 @@ The spreadsheet tab `AutoWater` is used for logging data. We can see that :
 <img src="docs/autowater_gs_update.png" />
 
 
+### Schedule settings via spreadsheet 
 We can edit the spreadsheet tab `Control` to remotely set the watering schedule parameters. If the spreadsheet entry is an 'x', no modification of the currently configured parameter is required.
 
 In the example below, we have edited the `Control` tab to set the sensor threshold, while the other schedule parameters are not modified from their existing values.
 
 <img src="docs/autowater_gs_control.png" />
 
-Note that these schedule settings are read only on the next scheduled wake-up, and then set for the following day.
+Note that schedule changes in the spreadsheet are read only on the next scheduled wake-up, and then set for the following day.
 
-When we use the WiFi webpage to configure schedule parameters, the changes are immediate, e.g. if we edit the settings at 9am and set the daily wake up time to 11am and then reset the system, the unit will wake up at 11am that day.
+### Schedule settings via WiFi configuration
+When we use the WiFi webpage to configure schedule parameters, the changes are immediate, e.g. if we edit the schedule settings at 9am, set the daily wake up time to 11am and then reset the system, the unit will wake up at 11am that day.
 
 
 To summarize : 
@@ -250,7 +252,9 @@ Prior to this I tried to measure the self-discharge leakage current of the capac
 
 Even assuming just 100mAHr capacity, that gives us 100/0.64 = 156 days! Hard to believe. Let's see if the capacitor in parallel will act as a low ESR storage bank for high current pulses and prevent ESP32-C3 brown-outs when the li-poly battery has discharged 50% to 3.6V.
 
-[Updated PDF export of spreadsheet (2022 June 4)](docs/Data_Logger%20-%20AutoWater.pdf)
+## Update 
+The ESP32-C3 was eventually unable to boot and connect to WiFi successfully after the battery voltage dropped to 3.4V.  This was after 249 days running without any issues off a fully charged 200mAHr single-cell LiPoly battery.
+[Here is the PDF export of spreadsheet from fully-charged first update, to last successful update.](docs/Data_Logger%20-%20AutoWater.pdf)
 
 # Credits
 * [Updating Google Sheet via HTTPS](https://stackoverflow.com/questions/69685813/problem-esp32-send-data-to-google-sheet-through-google-app-script)
