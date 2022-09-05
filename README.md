@@ -252,9 +252,16 @@ Prior to this I tried to measure the self-discharge leakage current of the capac
 
 Even assuming just 100mAHr capacity, that gives us 100/0.64 = 156 days! Hard to believe. Let's see if the capacitor in parallel will act as a low ESR storage bank for high current pulses and prevent ESP32-C3 brown-outs when the li-poly battery has discharged 50% to 3.6V.
 
-## Update 
-The ESP32-C3 was eventually unable to boot and connect to WiFi successfully after the battery voltage dropped to 3.4V.  This was after 249 days running without any issues off a fully charged 200mAHr single-cell LiPoly battery.
-[Here is the PDF export of spreadsheet from fully-charged first update, to last successful update.](docs/Data_Logger%20-%20AutoWater.pdf)
+## Spreadsheet Log Update 
+[Here is the PDF export of the Google Spreadsheet from fully-charged first update, to last successful update.](docs/Data_Logger%20-%20AutoWater.pdf)
+
+The system ran without issues for 251 days starting with a fully charged 200mAHr single-cell LiPoly battery.
+
+On 4th September 2022, the ESP32-C3 was unable to boot and log the sensor reading - at this point the battery voltage had dropped to 3.3V. 
+
+Note that the WiFi Access Point was not available from September 1 through September 5. I use my mobile phone as a WiFi AP and was not at home at the scheduled wake-up time of 12 noon on these days.
+
+I removed the battery, charged it again and re-connected the battery at 8:20am on September 5. The system booted with the incorrect RTC time (so a large NTP-RTC error), logged the queued sensor readings in the flash buffer from September 1 through September 3, corrected the RTC using NTP time, and then woke up again at the scheduled time of 12 noon.
 
 # Credits
 * [Updating Google Sheet via HTTPS](https://stackoverflow.com/questions/69685813/problem-esp32-send-data-to-google-sheet-through-google-app-script)
